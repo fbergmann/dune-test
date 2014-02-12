@@ -1,0 +1,18 @@
+ef828dd2ed7f6f4b93f16522cf36d97a95ff234e
+ dune/pdelab/constraints/CMakeLists.txt | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/dune/pdelab/constraints/CMakeLists.txt b/dune/pdelab/constraints/CMakeLists.txt
+index 6f005f5..0094db6 100644
+--- a/dune/pdelab/constraints/CMakeLists.txt
++++ b/dune/pdelab/constraints/CMakeLists.txt
+@@ -1,6 +1,9 @@
+ set(constraintsdir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/constraints)
+ set(constraints_HEADERS
+     conforming.hh
++    constraints.hh
++    constraintsparameters.hh
++    constraintstransformation.hh
+     hangingnode.hh
+     hangingnodemanager.hh
+     interiornode.hh

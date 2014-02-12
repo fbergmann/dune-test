@@ -1,0 +1,55 @@
+ src/convection-diffusion/CMakeLists.txt | 40 ++++++++++++++++-----------------
+ 1 file changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/src/convection-diffusion/CMakeLists.txt b/src/convection-diffusion/CMakeLists.txt
+index 432dbcc..c919037 100644
+--- a/src/convection-diffusion/CMakeLists.txt
++++ b/src/convection-diffusion/CMakeLists.txt
+@@ -359,27 +359,27 @@ add_dune_alugrid_flags(diffusion )
+ target_link_libraries(diffusion ${DUNE_LIBS})
+ add_dune_superlu_flags(diffusion )
+ 
+-if(ALUGRID_FOUND)
+-  add_executable(tutorial tutorial.cc)
+-  add_dune_alberta_flags(tutorial )
+-  add_dune_amiramesh_flags(tutorial )
+-  add_dune_ug_flags(tutorial )
+-  add_dune_mpi_flags(tutorial )
+-  target_link_libraries(tutorial ${DUNE_LIBS})
+-  add_dune_superlu_flags(tutorial )
+-  add_dune_alugrid_flags(tutorial )
+-
+-# The following lines are comment out as the translation is not clear. TODO review
+-#
+-# set(tutorial_ LDADD ${DUNEMPILDFLAGS} ${DUNEMPILIBS} ${SUPERLU_LIBS} ${ALBERTA_LDFLAGS} ${ALBERTA_LIBS} ${AMIRAMESH_LDFLAGS} ${AMIRAMESH_LIBS} ${UG_LDFLAGS} ${UG_LIBS} ${ALUGRID_LDFLAGS} ${ALUGRID_LIBS} ${DUNE_LDFLAGS} ${DUNE_LIBS})
+-# The following lines are comment out as the translation is not clear. TODO review
++#if(ALUGRID_FOUND)
++#  add_executable(tutorial tutorial.cc)
++#  add_dune_alberta_flags(tutorial )
++#  add_dune_amiramesh_flags(tutorial )
++#  add_dune_ug_flags(tutorial )
++#  add_dune_mpi_flags(tutorial )
++#  target_link_libraries(tutorial ${DUNE_LIBS})
++#  add_dune_superlu_flags(tutorial )
++#  add_dune_alugrid_flags(tutorial )
++#
++## The following lines are comment out as the translation is not clear. TODO review
++##
++## set(tutorial_ LDADD ${DUNEMPILDFLAGS} ${DUNEMPILIBS} ${SUPERLU_LIBS} ${ALBERTA_LDFLAGS} ${ALBERTA_LIBS} ${AMIRAMESH_LDFLAGS} ${AMIRAMESH_LIBS} ${UG_LDFLAGS} ${UG_LIBS} ${ALUGRID_LDFLAGS} ${ALUGRID_LIBS} ${DUNE_LDFLAGS} ${DUNE_LIBS})
++## The following lines are comment out as the translation is not clear. TODO review
++##
++## set(tutorial_ LDFLAGS ${AM_LDFLAGS} ${SUPERLU_LDFLAGS})
++#
++#target_link_libraries(tutorial ${DUNE_LIBS})
++#add_dune_superlu_flags(tutorial )
++#endif(ALUGRID_FOUND)
+ #
+-# set(tutorial_ LDFLAGS ${AM_LDFLAGS} ${SUPERLU_LDFLAGS})
+-
+-target_link_libraries(tutorial ${DUNE_LIBS})
+-add_dune_superlu_flags(tutorial )
+-endif(ALUGRID_FOUND)
+-
+ add_executable(scalabilitytest scalabilitytest.cc)
+ 
+ add_dune_alberta_flags(scalabilitytest )

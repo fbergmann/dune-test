@@ -1,0 +1,22 @@
+ cmake/modules/DuneMacros.cmake | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/cmake/modules/DuneMacros.cmake b/cmake/modules/DuneMacros.cmake
+index 7cb1c93..e57c343 100644
+--- a/cmake/modules/DuneMacros.cmake
++++ b/cmake/modules/DuneMacros.cmake
+@@ -390,10 +390,10 @@ macro(dune_project)
+ 
+   # optional Fortran support
+   include(LanguageSupport)
+-  workaround_9220(Fortran Fortran_Works)
+-  if(Fortran_Works)
+-    enable_language(Fortran OPTIONAL)
+-  endif(Fortran_Works)
++  #workaround_9220(Fortran Fortran_Works)
++  #if(Fortran_Works)
++  #  enable_language(Fortran OPTIONAL)
++  #endif(Fortran_Works)
+ 
+   option(DUNE_USE_ONLY_STATIC_LIBS "If set to ON, we will force static linkage everywhere" OFF)
+   if(DUNE_USE_ONLY_STATIC_LIBS)

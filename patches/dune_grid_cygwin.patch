@@ -1,0 +1,68 @@
+2ae25778e619e7c2f2ab3b9b80d5774437a096c9
+ dune/grid/albertagrid/albertagrid.cc         | 3 ++-
+ dune/grid/alugrid/2d/geometry_imp.cc         | 7 +++++++
+ dune/grid/alugrid/common/defaultindexsets.hh | 2 ++
+ dune/grid/io/file/gmshreader.hh              | 4 ++++
+ 4 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/dune/grid/albertagrid/albertagrid.cc b/dune/grid/albertagrid/albertagrid.cc
+index 2e24e05..dd1c623 100644
+--- a/dune/grid/albertagrid/albertagrid.cc
++++ b/dune/grid/albertagrid/albertagrid.cc
+@@ -73,7 +73,8 @@ namespace Dune
+ 
+     numBoundarySegments_ = mesh_.create( macroData, projectionFactory );
+     if( !mesh_ )
+-      DUNE_THROW( AlbertaError, "Invalid macro data structure." );
++      return;
++      //DUNE_THROW( AlbertaError, "Invalid macro data structure." );
+ 
+     setup();
+     hIndexSet_.create();
+diff --git a/dune/grid/alugrid/2d/geometry_imp.cc b/dune/grid/alugrid/2d/geometry_imp.cc
+index dad0bd5..f7b829e 100644
+--- a/dune/grid/alugrid/2d/geometry_imp.cc
++++ b/dune/grid/alugrid/2d/geometry_imp.cc
+@@ -3,6 +3,13 @@
+ #ifndef DUNE_ALU2DGRID_GEOMETRYIMP_CC
+ #define DUNE_ALU2DGRID_GEOMETRYIMP_CC
+ 
++#define _USE_MATH_DEFINES 
++#include <cmath>
++
++#ifndef M_SQRT2
++#define M_SQRT2 1.41421356237309504880
++#endif /* not M_SQRT2 */
++
+ #include <dune/geometry/referenceelements.hh>
+ 
+ namespace Dune
+diff --git a/dune/grid/alugrid/common/defaultindexsets.hh b/dune/grid/alugrid/common/defaultindexsets.hh
+index 410594b..83f95d8 100644
+--- a/dune/grid/alugrid/common/defaultindexsets.hh
++++ b/dune/grid/alugrid/common/defaultindexsets.hh
+@@ -5,7 +5,9 @@
+ 
+ //- system includes
+ #include <vector>
++#ifdef HAVE_RPC_H
+ #include <rpc/rpc.h>
++#endif 
+ 
+ //- Dune includes
+ #include <dune/common/forloop.hh>
+diff --git a/dune/grid/io/file/gmshreader.hh b/dune/grid/io/file/gmshreader.hh
+index e387d30..684251b 100644
+--- a/dune/grid/io/file/gmshreader.hh
++++ b/dune/grid/io/file/gmshreader.hh
+@@ -23,6 +23,10 @@
+ #include <dune/grid/common/boundarysegment.hh>
+ #include <dune/grid/common/gridfactory.hh>
+ 
++#ifndef ftello
++#define ftello ftell
++#endif
++
+ namespace Dune
+ {
+ 

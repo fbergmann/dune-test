@@ -1,0 +1,172 @@
+diff --git a/dune/pdelab/CMakeLists.txt b/dune/pdelab/CMakeLists.txt
+index 7b283d5..543e79f 100644
+--- a/dune/pdelab/CMakeLists.txt
++++ b/dune/pdelab/CMakeLists.txt
+@@ -9,6 +9,7 @@ set(SUBDIRS
+         finiteelement
+         finiteelementmap
+         function
++	ordering
+         gridfunctionspace
+         gridoperator
+         gridoperatorspace
+diff --git a/dune/pdelab/constraints/CMakeLists.txt b/dune/pdelab/constraints/CMakeLists.txt
+index 1692459..f39e17b 100644
+--- a/dune/pdelab/constraints/CMakeLists.txt
++++ b/dune/pdelab/constraints/CMakeLists.txt
+@@ -1,6 +1,9 @@
+ set(constraintsdir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/constraints)
+ set(constraints_HEADERS
+     conforming.hh
++    constraints.hh
++    constraintsparameters.hh
++    constraintstransformation.hh
+     hangingnode.hh
+     hangingnodemanager.hh
+     interiornode.hh
+diff --git a/dune/pdelab/gridfunctionspace/CMakeLists.txt b/dune/pdelab/gridfunctionspace/CMakeLists.txt
+index a8b889d..4e97186 100644
+--- a/dune/pdelab/gridfunctionspace/CMakeLists.txt
++++ b/dune/pdelab/gridfunctionspace/CMakeLists.txt
+@@ -1,19 +1,12 @@
+ set(gridfunctionspacedir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/gridfunctionspace)
+ set(gridfunctionspace_HEADERS
+-  compositegridfunctionspace.hh
+-  genericdatahandle.hh
+-  gridfunctionspace.hh
+-  gridfunctionspacebase.hh
+-  gridfunctionspaceutilities.hh
+-  interpolate.hh
+-  intersectionindexset.hh
+-  localfunctionspace.hh
+-  localfunctionspacetags.hh
+-  localvector.hh
+-  powercompositegridfunctionspacebase.hh
+-  powergridfunctionspace.hh
+-  subspace.hh
+-  subspacelocalfunctionspace.hh
+-  tags.hh)
++compositegridfunctionspace.hh          interpolate.hh                         powergridfunctionspace.hh
++datahandleprovider.hh                  intersectionindexset.hh                subspace.hh
++entityindexcache.hh                    lfsindexcache.hh                       subspacelocalfunctionspace.hh
++genericdatahandle.hh                   localfunctionspace.hh                  tags.hh
++gridfunctionspace.hh                   localfunctionspacetags.hh              utility.hh
++gridfunctionspacebase.hh               localvector.hh                         vectorgridfunctionspace.hh
++gridfunctionspaceutilities.hh          powercompositegridfunctionspacebase.hh vtk.hh
++)
+ 
+ install(FILES ${gridfunctionspace_HEADERS} DESTINATION ${gridfunctionspacedir})
+diff --git a/dune/pdelab/gridoperator/common/CMakeLists.txt b/dune/pdelab/gridoperator/common/CMakeLists.txt
+index 60c4e9a..a90d554 100644
+--- a/dune/pdelab/gridoperator/common/CMakeLists.txt
++++ b/dune/pdelab/gridoperator/common/CMakeLists.txt
+@@ -3,11 +3,10 @@ set(gridoperatorcommondir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/gridoperator/
+ set(headercheck_IGNORE  assembler.hh)
+ 
+ set(gridoperatorcommon_HEADERS             
+-        assembler.hh                    
+-        assemblerutilities.hh           
+-        gridoperatorutilities.hh        
+-        localassemblerenginebase.hh     
+-        timesteppingparameterinterface.hh)
++assembler.hh                      gridoperatorutilities.hh          timesteppingparameterinterface.hh
++assemblerutilities.hh             localassemblerenginebase.hh
++borderdofexchanger.hh             localmatrix.hh
++)
+ 
+ # include not needed for CMake
+ # include $(top_srcdir)/am/global-rules
+diff --git a/dune/pdelab/localoperator/CMakeLists.txt b/dune/pdelab/localoperator/CMakeLists.txt
+index 2f96946..b046d52 100644
+--- a/dune/pdelab/localoperator/CMakeLists.txt
++++ b/dune/pdelab/localoperator/CMakeLists.txt
+@@ -1,44 +1,19 @@
+ set(commondir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/localoperator)
+ set(common_HEADERS                                 
+-        cg_stokes.hh                            
+-        convectiondiffusion.hh                  
+-        convectiondiffusiondg.hh                
+-        convectiondiffusionfem.hh               
+-        convectiondiffusionparameter.hh         
+-        defaultimp.hh                           
+-        dgparameter.hh                          
+-        diffusion.hh                            
+-        diffusionccfv.hh                        
+-        diffusiondg.hh                          
+-        diffusionmfd.hh                         
+-        diffusionmixed.hh                       
+-        diffusionparam.hh                       
+-        electrodynamic.hh                       
+-        flags.hh                                
+-        idefault.hh                             
+-        interface.hh                            
+-        l2.hh                                   
+-        laplacedirichletccfv.hh                 
+-        laplacedirichletp12d.hh                 
+-        linearelasticity.hh                     
+-        linearacousticsdg.hh                    
+-        linearacousticsparameter.hh             
+-        maxwelldg.hh                            
+-        maxwellparameter.hh                     
+-        mfdcommon.hh                            
+-        pattern.hh                              
+-        poisson.hh                              
+-        scaled.hh                               
+-        stokesdg.hh                             
+-        sum.hh                                  
+-        stokesdgparameter.hh                    
+-        stokesparameter.hh                      
+-        stokesdg_vecfem.hh                      
+-        transportccfv.hh                        
+-        twophaseccfv.hh                         
+-        vectorwave.hh                           
+-        weightedsum.hh                          
+-        zero.hh)
++
++callswitch.hh                   diffusionmfd.hh                 laplacedirichletp12d.hh         stokesdg.hh
++cg_stokes.hh                    diffusionmixed.hh               linearacousticsdg.hh            stokesdg_vecfem.hh
++convectiondiffusion.hh          diffusionparam.hh               linearacousticsparameter.hh     stokesdgparameter.hh
++convectiondiffusiondg.hh        electrodynamic.hh               linearelasticity.hh             stokesparameter.hh
++convectiondiffusionfem.hh       errorindicatordg.hh             linearelasticityparameter.hh    sum.hh
++convectiondiffusionparameter.hh eval.hh                         maxwelldg.hh                    transportccfv.hh
++defaultimp.hh                   flags.hh                        maxwellparameter.hh             twophaseccfv.hh
++dgparameter.hh                  idefault.hh                     mfdcommon.hh                    vectorwave.hh
++diffusion.hh                    interface.hh                    pattern.hh                      weightedsum.hh
++diffusionccfv.hh                l2.hh                           poisson.hh                      zero.hh
++diffusiondg.hh                  laplacedirichletccfv.hh         scaled.hh        
++
++)
+ 
+ # include not needed for CMake
+ # include $(top_srcdir)/am/global-rules
+diff --git a/dune/pdelab/ordering/CMakeLists.txt b/dune/pdelab/ordering/CMakeLists.txt
+index bc772b9..8d1510e 100644
+--- a/dune/pdelab/ordering/CMakeLists.txt
++++ b/dune/pdelab/ordering/CMakeLists.txt
+@@ -1,18 +1,9 @@
+ install(FILES
+-  decorator.hh
+-  directleaflocalordering.hh
+-  entityblockedlocalordering.hh
+-  gridviewordering.hh
+-  interleavedordering.hh
+-  leafgridviewordering.hh
+-  leaflocalordering.hh
+-  lexicographicordering.hh
+-  localorderingbase.hh
+-  orderingbase.hh
+-  orderinginterface.hh
+-  permutedordering.hh
+-  singlecodimleafordering.hh
+-  subordering.hh
+-  transformations.hh
+-  utility.hh
+-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}//dune/pdelab/gridfunctionspace)
++
++decorator.hh                  leafgridviewordering.hh       orderingbase.hh               subordering.hh
++directleaflocalordering.hh    leaflocalordering.hh          orderinginterface.hh          transformations.hh
++entityblockedlocalordering.hh leaforderingbase.hh           permutationordering.hh        utility.hh
++gridviewordering.hh           lexicographicordering.hh      permutedordering.hh
++interleavedordering.hh        localorderingbase.hh          singlecodimleafordering.hh
++
++  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/ordering)

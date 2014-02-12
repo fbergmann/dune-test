@@ -1,0 +1,114 @@
+9844aeaf23dee5cecbdfcbc1db7fa4caf974d88f
+ dune/pdelab/CMakeLists.txt                     | 1 +
+ dune/pdelab/constraints/CMakeLists.txt         | 8 --------
+ dune/pdelab/gridfunctionspace/CMakeLists.txt   | 9 ++++++++-
+ dune/pdelab/gridoperator/common/CMakeLists.txt | 2 ++
+ dune/pdelab/localoperator/CMakeLists.txt       | 1 +
+ dune/pdelab/ordering/CMakeLists.txt            | 3 ++-
+ 6 files changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/dune/pdelab/CMakeLists.txt b/dune/pdelab/CMakeLists.txt
+index 7b283d5..543e79f 100644
+--- a/dune/pdelab/CMakeLists.txt
++++ b/dune/pdelab/CMakeLists.txt
+@@ -9,6 +9,7 @@ set(SUBDIRS
+         finiteelement
+         finiteelementmap
+         function
++	ordering
+         gridfunctionspace
+         gridoperator
+         gridoperatorspace
+diff --git a/dune/pdelab/constraints/CMakeLists.txt b/dune/pdelab/constraints/CMakeLists.txt
+index b1f31eb..6f005f5 100644
+--- a/dune/pdelab/constraints/CMakeLists.txt
++++ b/dune/pdelab/constraints/CMakeLists.txt
+@@ -15,12 +15,4 @@ add_subdirectory(common)
+ # include not needed for CMake
+ # include $(top_srcdir)/am/global-rules
+ 
+-foreach(i ${SUBDIRS})
+-  if(${i} STREQUAL "test")
+-    set(opt EXCLUDE_FROM_ALL)
+-  endif(${i} STREQUAL "test")
+-  add_subdirectory(${i} ${opt})
+-  unset(opt)
+-endforeach(i ${SUBDIRS})
+-
+ install(FILES ${constraints_HEADERS} DESTINATION ${constraintsdir})
+diff --git a/dune/pdelab/gridfunctionspace/CMakeLists.txt b/dune/pdelab/gridfunctionspace/CMakeLists.txt
+index a8b889d..9d2bb59 100644
+--- a/dune/pdelab/gridfunctionspace/CMakeLists.txt
++++ b/dune/pdelab/gridfunctionspace/CMakeLists.txt
+@@ -1,12 +1,15 @@
+ set(gridfunctionspacedir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/gridfunctionspace)
+ set(gridfunctionspace_HEADERS
+   compositegridfunctionspace.hh
++  datahandleprovider.hh
++  entityindexcache.hh
+   genericdatahandle.hh
+   gridfunctionspace.hh
+   gridfunctionspacebase.hh
+   gridfunctionspaceutilities.hh
+   interpolate.hh
+   intersectionindexset.hh
++  lfsindexcache.hh
+   localfunctionspace.hh
+   localfunctionspacetags.hh
+   localvector.hh
+@@ -14,6 +17,10 @@ set(gridfunctionspace_HEADERS
+   powergridfunctionspace.hh
+   subspace.hh
+   subspacelocalfunctionspace.hh
+-  tags.hh)
++  tags.hh
++  utility.hh
++  vectorgridfunctionspace.hh
++  vtk.hh
++)
+ 
+ install(FILES ${gridfunctionspace_HEADERS} DESTINATION ${gridfunctionspacedir})
+diff --git a/dune/pdelab/gridoperator/common/CMakeLists.txt b/dune/pdelab/gridoperator/common/CMakeLists.txt
+index 60c4e9a..4ef286c 100644
+--- a/dune/pdelab/gridoperator/common/CMakeLists.txt
++++ b/dune/pdelab/gridoperator/common/CMakeLists.txt
+@@ -5,8 +5,10 @@ set(headercheck_IGNORE  assembler.hh)
+ set(gridoperatorcommon_HEADERS             
+         assembler.hh                    
+         assemblerutilities.hh           
++	borderdofexchanger.hh
+         gridoperatorutilities.hh        
+         localassemblerenginebase.hh     
++	localmatrix.hh
+         timesteppingparameterinterface.hh)
+ 
+ # include not needed for CMake
+diff --git a/dune/pdelab/localoperator/CMakeLists.txt b/dune/pdelab/localoperator/CMakeLists.txt
+index 2f96946..4e25e37 100644
+--- a/dune/pdelab/localoperator/CMakeLists.txt
++++ b/dune/pdelab/localoperator/CMakeLists.txt
+@@ -1,5 +1,6 @@
+ set(commondir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/pdelab/localoperator)
+ set(common_HEADERS                                 
++	callswitch.hh
+         cg_stokes.hh                            
+         convectiondiffusion.hh                  
+         convectiondiffusiondg.hh                
+diff --git a/dune/pdelab/ordering/CMakeLists.txt b/dune/pdelab/ordering/CMakeLists.txt
+index bc772b9..34a287c 100644
+--- a/dune/pdelab/ordering/CMakeLists.txt
++++ b/dune/pdelab/ordering/CMakeLists.txt
+@@ -6,6 +6,7 @@ install(FILES
+   interleavedordering.hh
+   leafgridviewordering.hh
+   leaflocalordering.hh
++  leaforderingbase.hh
+   lexicographicordering.hh
+   localorderingbase.hh
+   orderingbase.hh
+@@ -15,4 +16,4 @@ install(FILES
+   subordering.hh
+   transformations.hh
+   utility.hh
+-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}//dune/pdelab/gridfunctionspace)
++  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}//dune/pdelab/ordering)
