@@ -36,5 +36,10 @@ ought to compile the Dune-test module, and you should be able to run it by invok
 	cd build-test/src
 	./dune_test
 
+## Result 
+If all went well, you ought to see a simulation like the one below: 
+
+![Simulation](images/out.gif) 
+
 ## Acknowledgments
 The model is based of a C++ implementation by Sven Sahle. The original Model has been developed by Pavel Hron.
