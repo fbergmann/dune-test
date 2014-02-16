@@ -149,9 +149,7 @@ private:
  * u_1
  */
 class Example05TimeLocalOperator
-        : public Dune::PDELab::NumericalJacobianApplyVolume<Example05TimeLocalOperator>,
-        public Dune::PDELab::NumericalJacobianVolume<Example05TimeLocalOperator>,
-        public Dune::PDELab::FullVolumePattern,
+        :public Dune::PDELab::FullVolumePattern,
         public Dune::PDELab::LocalOperatorDefaultFlags,
         public Dune::PDELab::InstationaryLocalOperatorDefaultMethods<double>
 {
@@ -215,6 +213,60 @@ public:
                 r.accumulate(lfsu1,i,u_1*phi1[i]*factor);
         }
     }
+
+  
+  // jacobian of volume term
+      template<typename EG, typename LFSU, typename X, typename LFSV, typename M>
+      void jacobian_volume (const EG& eg, const LFSU& lfsu, const X& x, const LFSV& lfsv,
+                            M& mat) const
+      {
+	// select the two components (assume Galerkin scheme U=V)
+        typedef typename LFSU::template Child<0>::Type LFSU0;       // extract components
+        const LFSU0& lfsu0 = lfsu.template child<0>();           // with template magic
+        typedef typename LFSU::template Child<1>::Type LFSU1;
+        const LFSU1& lfsu1 = lfsu.template child<1>();
+        // domain and range field type
+	     typedef typename LFSU0::Traits::FiniteElementType::
+          Traits::LocalBasisType::Traits::DomainFieldType DF;
+        typedef typename LFSU0::Traits::FiniteElementType::
+          Traits::LocalBasisType::Traits::RangeFieldType RF;
+	typedef typename LFSU0::Traits::FiniteElementType::
+          Traits::LocalBasisType::Traits::RangeType RangeType;
+        typedef typename LFSU0::Traits::SizeType size_type;
+
+        // dimensions
+        const int dim = EG::Geometry::dimension;
+
+        // select quadrature rule
+        Dune::GeometryType gt = eg.geometry().type();
+        const Dune::QuadratureRule<DF,dim>& rule = Dune::QuadratureRules<DF,dim>::rule(gt,intorder);
+
+        // loop over quadrature points
+        for (typename Dune::QuadratureRule<DF,dim>::const_iterator it=rule.begin(); it!=rule.end(); ++it)
+          {
+	    
+	    
+            // evaluate basis functions
+            std::vector<RangeType> phi0(lfsu0.size());
+            lfsu0.finiteElement().localBasis().evaluateFunction(it->position(),phi0);
+
+	    // evaluate basis functions
+            std::vector<RangeType> phi1(lfsu1.size());
+            lfsu1.finiteElement().localBasis().evaluateFunction(it->position(),phi1);
+	    
+	    RF factor = it->weight() * eg.geometry().integrationElement(it->position());
+            for (size_type j=0; j<lfsu0.size(); j++)
+	      for (size_type i=0; i<lfsu0.size(); i++)
+		mat.accumulate(lfsu0,i,lfsu0,j,phi0[i]*phi0[j]*factor);
+
+	    for (size_type j=0; j<lfsu1.size(); j++)
+	      for (size_type i=0; i<lfsu1.size(); i++)
+		mat.accumulate(lfsu1,i,lfsu1,j,phi1[i]*phi1[j]*factor);
+
+
+          }
+      }
+
 private:
     double tau;
     unsigned int intorder;
