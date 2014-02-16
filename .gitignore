@@ -232,4 +232,15 @@ build-pdelab
 build-pdelab-howto
 build-typetree
 
+dune-common
+dune-geometry
+dune-grid
+dune-grid-howto
+dune-istl
+dune-localfunctions
+dune-pdelab
+dune-pdelab-howto
+dune-typetree
+
+
 install
