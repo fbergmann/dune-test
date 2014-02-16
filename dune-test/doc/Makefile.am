@@ -6,7 +6,7 @@ BASEDIR = ..
 # add list of html files to generate from wml
 PAGES=
 
-docdir=$(datadir)/doc/dune-test
+docdir=$(datadir)/doc/dune-copasi
 
 EXTRA_DIST = CMakeLists.txt
 

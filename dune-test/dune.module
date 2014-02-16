@@ -3,7 +3,7 @@
 ################################
 
 #Name of the module
-Module: dune-test
+Module: dune-copasi
 Version: 1.0
 Maintainer: fbergman@caltech.edu
 #depending on 

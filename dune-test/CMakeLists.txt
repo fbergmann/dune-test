@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.6)
-project(dune-test CXX)
+project(dune-copasi CXX)
 
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
       "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))

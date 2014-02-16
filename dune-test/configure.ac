@@ -3,7 +3,7 @@
 AC_PREREQ([2.62])
 DUNE_AC_INIT # gets module version from dune.module file
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([src/dune_test.cc])
+#AC_CONFIG_SRCDIR([src/dune_test.cc])
 AC_CONFIG_HEADERS([config.h])
 
 
@@ -20,15 +20,18 @@ LIBS="$DUNE_LIBS"
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
+  src/turing_problem/Makefile
+  src/turing_problem_ccfv/Makefile
   cmake/Makefile
   cmake/modules/Makefile
   doc/Makefile
   doc/doxygen/Makefile
   doc/doxygen/Doxyfile
   dune/Makefile
-  dune/test/Makefile
+  dune/copasi/Makefile
+  dune/copasi/utilities/Makefile
   m4/Makefile
-  dune-test.pc
+  dune-copasi.pc
 ])
 AC_OUTPUT
 # finally print the summary information

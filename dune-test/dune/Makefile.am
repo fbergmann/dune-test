@@ -1,4 +1,4 @@
-SUBDIRS = test
+SUBDIRS = copasi
 
 EXTRA_DIST = CMakeLists.txt
 
