@@ -8,11 +8,13 @@ then
   ALUGRID_VERSION=-DALUGRID_VERSION_CMD=$DIRECTORY/install/bin/alugridversion.exe
 fi
 
+
 CMAKE_OPTS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install "
+
 # build alberta if it does not exist
 if [ ! -d "$DIRECTORY/alberta-2.0.1" ]; then
   if [ ! -d "$DIRECTORY/alberta-2.0.1.tar.gz" ]; then
-    curl https://dl.dropboxusercontent.com/u/7222043/alberta-2.0.1.tar.gz -o alberta-2.0.1.tar.gz
+    curl http://dl.dropboxusercontent.com/u/7222043/alberta-2.0.1.tar.gz -o alberta-2.0.1.tar.gz
   fi 
   tar zxf alberta-2.0.1.tar.gz
   chmod -R 755 alberta-2.0.1
@@ -27,7 +29,7 @@ fi
 # build ALUgrid if it does not exist
 if [ ! -d "$DIRECTORY/ALUGrid-1.50" ]; then
   if [ ! -d "$DIRECTORY/ALUGrid-1.50.tar.gz " ]; then
-  curl https://dl.dropboxusercontent.com/u/7222043/ALUGrid-1.50.tar.gz -o ALUGrid-1.50.tar.gz 
+  curl http://dl.dropboxusercontent.com/u/7222043/ALUGrid-1.50.tar.gz -o ALUGrid-1.50.tar.gz 
   fi 
   tar zxf ALUGrid-1.50.tar.gz
   chmod -R 755 ALUGrid-1.50
@@ -42,7 +44,7 @@ fi
 # build SuperLU_4.3 if it does not exist
 if [ ! -d "$DIRECTORY/SuperLU_4.3" ]; then
   if [ ! -d "$DIRECTORY/superlu_4.3.tar.gz " ]; then
-  curl https://dl.dropboxusercontent.com/u/7222043/superlu_4.3.tar.gz -o superlu_4.3.tar.gz
+  curl http://dl.dropboxusercontent.com/u/7222043/superlu_4.3.tar.gz -o superlu_4.3.tar.gz
   fi 
   tar zxf superlu_4.3.tar.gz
   chmod -R 755 SuperLU_4.3
