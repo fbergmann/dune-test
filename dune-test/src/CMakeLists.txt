@@ -1,5 +1,2 @@
-set(SUBDIRS
-        turing_problem
-	turing_problem_ccfv)
-       
-
+add_subdirectory(turing_problem)
+add_subdirectory(turing_problem_ccfv)

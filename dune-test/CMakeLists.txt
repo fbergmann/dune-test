@@ -27,7 +27,3 @@ add_subdirectory("cmake/modules")
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
 
-# copy config file if we don't have it
-if (NOT EXISTS "${CMAKE_BINARY_DIR}/src/dune_test.conf")
-configure_file(${CMAKE_SOURCE_DIR}/src/dune_test.conf ${CMAKE_BINARY_DIR}/src/dune_test.conf COPYONLY)
-endif()
