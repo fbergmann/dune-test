@@ -18,5 +18,5 @@ endif()
 
 # create vtk dir, as otherwise the executable just falls over
 if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/vtk")
-file(MAKE_DIRECTORY ${directory}
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/vtk")
 endif()
