@@ -93,11 +93,11 @@ public:
   //! constructor stores reference to the model
   ReactionAdapter(const Dune::ParameterTree & param_)
     : param(param_),
-      v1(param.sub("Reaction").get<RF>("v1")),
-      v2(param.sub("Reaction").get<RF>("v2")),
-      V(param.sub("Reaction").get<RF>("V")),
-      k1(param.sub("Reaction").get<RF>("k1")),
-      Km(param.sub("Reaction").get<RF>("Km"))
+      v1(param.sub("Reaction").template get<RF>("v1")),
+      v2(param.sub("Reaction").template get<RF>("v2")),
+      V(param.sub("Reaction").template get<RF>("V")),
+      k1(param.sub("Reaction").template get<RF>("k1")),
+      Km(param.sub("Reaction").template get<RF>("Km"))
   {
 
   }
