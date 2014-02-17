@@ -11,6 +11,8 @@ With parameters:
 * V = 0.5
 * Km = 0.1
 
+The values of these parameters (and the diffusion coefficients) is read from the configuration file that is placed next to the binary. (The template for these files is in `dune-test/src/turing_problem/turing.conf` and `dune-test/src/turing_problem_ccfv/turing_ccv.conf` respectively). 
+
 ## Setup
 
 Compilation of the project is possible on CYGWIN, OSX and Linux. As dependencies only `cmake` and `curl` are needed. From there simply run first: 
@@ -35,6 +37,9 @@ ought to compile the Dune-test module, and you should be able to run it by invok
 
 	cd build-test/src
 	./dune_test
+
+## Running the example
+Once the example is compiled, two binaries ought to have been created: `src/turing_problem/turing_problem` and `src/turing_problem_ccfv/turing_ccfv`. To run them simply change into the directory and execute these binaries. Feel free to tweak the `.conf` files to change parameters of the runs. After each iteration the exectuables write `.vtu` files into the `./vtk` folder. These files can be viewed with [paraview](http://www.paraview.org/). Below an example rendering.  
 
 ## Result 
 If all went well, you ought to see a simulation like the one below: 
