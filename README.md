@@ -46,5 +46,10 @@ If all went well, you ought to see a simulation like the one below:
 
 ![Simulation](images/out.gif) 
 
+Finally, I have another example working that restricts the geometry of the domain, so something else but the Unit grid can be used. This makes use of the [dune-multidomaingrid](http://users.dune-project.org/projects/dune-multidomaingrid). A new example has been added and is built automatically by cmake (though you will need to have dune-multidomaingrid and boost installed for it to work). 
+
+![ODE](images/multidomaingrid.gif)
+
+
 ## Acknowledgments
 The model is based of a C++ implementation by Sven Sahle. The original Model has been developed by Pavel Hron.
