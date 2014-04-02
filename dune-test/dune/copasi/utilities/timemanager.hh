@@ -52,7 +52,8 @@ protected:
   ConvergenceAdaptiveTimeStepper()
     : backup_dt(0), total_steps(0), notified(true), verbosity_level(0)
   {
-    std::cout << "ConvergenceAdaptiveTimeStepper" << std::endl;
+      if (verbosity_level)
+          std::cout << "ConvergenceAdaptiveTimeStepper" << std::endl;
   }
 
 public:
@@ -104,7 +105,7 @@ public:
       backup_dt(0),
       increase_rate(configuration.get<Real>("Timeloop.increase_rate")),
       total_steps(0),
-      verbosity_level(1)
+      verbosity_level(configuration.get<int>("Verbosity.verbosity"))
   {}
 
   /**

@@ -2,53 +2,57 @@
 /** \file
 
     \brief Solve two-component diffusion-reaction system
-    with finite volume scheme
+    with finite volume scheme. This class tests the
+    multi domain grid.
 */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include<math.h>
-#include<iostream>
-#include<vector>
-#include<map>
-#include<string>
-#include<stdlib.h>
+#include <math.h>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <string>
+#include <stdlib.h>
 
-#include<dune/common/parallel/mpihelper.hh>
-#include<dune/common/exceptions.hh>
-#include<dune/common/fvector.hh>
-#include<dune/common/static_assert.hh>
-#include<dune/common/timer.hh>
-#include<dune/common/parametertreeparser.hh>
-#include<dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
-#include<dune/grid/io/file/gmshreader.hh>
-#include<dune/grid/yaspgrid.hh>
-#include<dune/grid/common/gridinfo.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/static_assert.hh>
+#include <dune/common/timer.hh>
+#include <dune/common/parametertreeparser.hh>
+#include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
+#include <dune/grid/io/file/gmshreader.hh>
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/multidomaingrid/indexsets.hh>
+#include <dune/grid/multidomaingrid/subdomainset.hh>
+#include <dune/grid/multidomaingrid.hh>
+#include <dune/grid/common/gridinfo.hh>
 #if HAVE_ALBERTA
-#include<dune/grid/albertagrid.hh>
+#include <dune/grid/albertagrid.hh>
 #include <dune/grid/albertagrid/dgfparser.hh>
 #endif
 #if HAVE_UG
-#include<dune/grid/uggrid.hh>
+#include <dune/grid/uggrid.hh>
 #endif
 #if HAVE_ALUGRID
-#include<dune/grid/alugrid.hh>
-#include<dune/grid/io/file/dgfparser/dgfalu.hh>
-#include<dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/alugrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #endif
-#include<dune/istl/bvector.hh>
-#include<dune/istl/operators.hh>
-#include<dune/istl/solvers.hh>
-#include<dune/istl/preconditioners.hh>
-#include<dune/istl/io.hh>
-#include<dune/istl/superlu.hh>
+#include <dune/istl/bvector.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/io.hh>
+#include <dune/istl/superlu.hh>
 
 #include <dune/copasi/utilities/newton.hh>
 #include <dune/copasi/utilities/newtonutilities.hh>
 #include <dune/copasi/utilities/timemanager.hh>
 
-#include<dune/pdelab/common/function.hh>
-#include<dune/pdelab/common/vtkexport.hh>
+#include <dune/pdelab/common/function.hh>
+#include <dune/pdelab/common/vtkexport.hh>
 #include <dune/pdelab/instationary/pvdwriter.hh>
 
 #include <dune/pdelab/backend/istl/tags.hh>
@@ -65,64 +69,20 @@
 #include <dune/pdelab/ordering/orderingbase.hh>
 
 #include <dune/pdelab/finiteelementmap/p0fem.hh>
-#include<dune/pdelab/constraints/p0.hh>
-#include<dune/pdelab/constraints/constraints.hh>
-#include<dune/pdelab/gridoperator/gridoperator.hh>
-#include<dune/pdelab/gridoperator/onestep.hh>
-#include<dune/pdelab/stationary/linearproblem.hh>
-#include<dune/pdelab/instationary/onestep.hh>
-#include<dune/pdelab/gridfunctionspace/subspace.hh>
+#include <dune/pdelab/constraints/p0.hh>
+#include <dune/pdelab/constraints/constraints.hh>
+#include <dune/pdelab/gridoperator/gridoperator.hh>
+#include <dune/pdelab/gridoperator/onestep.hh>
+#include <dune/pdelab/stationary/linearproblem.hh>
+#include <dune/pdelab/instationary/onestep.hh>
+#include <dune/pdelab/gridfunctionspace/subspace.hh>
 
-#include"componentparameters.hh"
-#include"ccfv_local_operator.hh"
-#include"../turing_problem/turing_initial.hh"
+#include "componentparameters.hh"
+#include "ccfv_local_operator.hh"
+#include "initial_conditions.h"
+#include "reactionadapter.h"
 
 
-//! Adapter for system of equations
-/*!
-  \tparam M model type
-  This class is used for adapting system of ODE's (right side)
-  to system of PDE's (as source term)
-  What need to be implemented is only the evaluate function
-*/
-template<typename RF, int N>
-class ReactionAdapter
-{
-public:
-
-    //! constructor stores reference to the model
-    ReactionAdapter(const Dune::ParameterTree & param_)
-        : param(param_),
-          v1(param.sub("Reaction").template get<RF>("v1")),
-          v2(param.sub("Reaction").template get<RF>("v2")),
-          V(param.sub("Reaction").template get<RF>("V")),
-          k1(param.sub("Reaction").template get<RF>("k1")),
-          Km(param.sub("Reaction").template get<RF>("Km"))
-    {
-
-    }
-
-    void preStep(RF time,RF dt,int stages)
-    {
-
-    }
-
-    //! evaluate model in entity eg with local values x
-    template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
-    void evaluate (const EG& eg, const LFSU& lfsu, const X& x, const LFSV& lfsv, R& r)
-    {
-        RF r1 = -k1*x(lfsu,0)*x(lfsu,1)+v2;
-        RF r2 = k1*x(lfsu,0)*x(lfsu,1)+v1-V*x(lfsu,1)/(Km+x(lfsu,1));
-
-        r.accumulate(lfsv,0,-r1*eg.geometry().volume());
-        r.accumulate(lfsv,1,-r2*eg.geometry().volume());
-    }
-
-private:
-    const Dune::ParameterTree & param;
-    const RF v1, v2, V, k1, Km;
-
-};
 
 
 /** \brief Control time step after reaction.
@@ -139,18 +99,21 @@ bool controlReactionTimeStep (V &v)
     for (auto it=v.begin(); it!=v.end();++it)
         if (*it<0) return false;
 
-    std::cout << "concentration control was successfull" << std::endl;
+    //std::cout << "concentration control was successfull" << std::endl;
     return true;
 }
 
-template<class GV>
+template<class GV, int numComponents = 2>
 void run (const GV& gv, Dune::ParameterTree & param)
 {
+    const bool verbosity = param.sub("Verbosity").get<bool>("verbosity", false);
+    if (verbosity)
     Dune::gridinfo(gv.grid());
     typedef typename GV::Grid::ctype DF;
     typedef double RF;
     const int dim = GV::dimension;
     Dune::Timer watch;
+
 
     // output to vtk file (true/false)
     const bool graphics = param.get<bool>("writeVTK", false);
@@ -162,7 +125,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
     DP dp1(param, "Component1");
     DP dp2(param, "Component2");
 
-    typedef Dune::PDELab::MulticomponentDiffusion<GV,RF,DP,2> VCT;
+    typedef Dune::PDELab::MulticomponentDiffusion<GV,RF,DP,numComponents> VCT;
     VCT vct(dp1,dp2);
 
     // <<<2>>> Make grid function space
@@ -180,11 +143,11 @@ void run (const GV& gv, Dune::ParameterTree & param)
     CON con;
     GFS gfs(gv,fem,con);
     TPGFS tpgfs(gfs);
-    std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
+    if (verbosity) std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
 
     // some informations
     gfs.update();
-    std::cout << "number of DOF =" << gfs.globalSize() << std::endl;
+    if (verbosity) std::cout << "number of DOF =" << gfs.globalSize() << std::endl;
 
 
     // <<<2b>>> make subspaces for visualization
@@ -199,7 +162,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
     cg.clear();
     Dune::PDELab::constraints(tpgfs,cg,false);
 
-    typedef ReactionAdapter<RF,2> RA;
+    typedef ReactionAdapter<RF,numComponents> RA;
     RA ra(param);
 
     typedef Dune::PDELab::MulticomponentCCFVSpatialDiffusionOperator<VCT,RA> LOP;
@@ -240,7 +203,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
     //LS ls(true);
 #else
     typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR LS;
-    LS ls(5000,true);
+    LS ls(5000,verbosity);
 #endif
 
     // <<<6>>> Solver for non-linear problem per stage
@@ -268,11 +231,12 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
     char basename[255];
     sprintf(basename,"%s-%01d",param.get<std::string>("VTKname","").c_str(),param.sub("Domain").get<int>("refine"));
+
     typedef Dune::PVDWriter<GV> PVDWriter;
     PVDWriter pvdwriter(gv,basename,Dune::VTK::conforming);
-
     pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U0DGF>(u0dgf,"u0"));
     pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U1DGF>(u1dgf,"u1"));
+
 
     // <<<9>>> time loop
 
@@ -286,11 +250,20 @@ void run (const GV& gv, Dune::ParameterTree & param)
         dt = timemanager.getTimeStepSize();
         if (gv.comm().rank() == 0)
         {
-            std::cout << "======= solve reaction problem ======= from " << timemanager.getTime() << "\n";
-            std::cout << "time " << timemanager.getTime() << " dt " << timemanager.getTimeStepSize() << std::endl;
+            if (verbosity)
+            {
+                std::cout << "======= solve reaction problem ======= from " << timemanager.getTime() << "\n";
+                std::cout << "time " << timemanager.getTime() << " dt " << timemanager.getTimeStepSize() << std::endl;
+            }
+            else
+            {
+                std::cout << ".";
+            }
         }
+
         watch.reset();
-        try {
+        try
+        {
             // do time step
             osm.apply(timemanager.getTime(),dt,uold,unew);
 
@@ -303,40 +276,40 @@ void run (const GV& gv, Dune::ParameterTree & param)
             }
             uold = unew;
 
-            if (gv.comm().rank() == 0)
+            if (gv.comm().rank() == 0 && verbosity)
                 std::cout << "... done\n";
         }
         // newton linear search error
         catch (Dune::PDELab::NewtonLineSearchError) {
-            if (gv.comm().rank() == 0)
+            if (gv.comm().rank() == 0 && verbosity)
                 std::cout << "Newton Linesearch Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
             continue;
         }
         catch (Dune::PDELab::NewtonNotConverged) {
-            if (gv.comm().rank() == 0)
+            if (gv.comm().rank() == 0 && verbosity)
                 std::cout << "Newton Convergence Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
             continue;
         }
         catch (Dune::PDELab::NewtonLinearSolverError) {
-            if (gv.comm().rank() == 0)
+            if (gv.comm().rank() == 0 && verbosity )
                 std::cout << "Newton Linear Solver Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
             continue;
         }
         catch (Dune::ISTLError) {
-            if (gv.comm().rank() == 0)
+            if (gv.comm().rank() == 0 && verbosity )
                 std::cout << "ISTL Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
             continue;
         }
 
-        if (gv.comm().rank() == 0)
+        if (gv.comm().rank() == 0 && verbosity)
             std::cout << "... took : " << watch.elapsed() << " s" << std::endl;
 
         // notify success in this timestep
@@ -355,6 +328,22 @@ void run (const GV& gv, Dune::ParameterTree & param)
 }
 
 
+bool isInside(const Dune::FieldVector<double,2>& point)
+{
+//    /center[0], center[1]
+
+    const auto& x = point[0];
+    const auto& y = point[1];
+
+    bool inside=
+            (pow(0.27 * (-42. + x), 2.) + pow(0.4 * (-50. + y), 2.) < 100. ||
+            (y < (-10.+ x) &&  y > (110. + -x) && x < 90.));
+
+    //if (inside)
+    //    std::cout << "found inside... x: " << x << " y: " << y  << std::endl;
+    return inside;
+}
+
 //===============================================================
 // Main program with grid setup
 //===============================================================
@@ -364,13 +353,13 @@ int main(int argc, char** argv)
     try{
         //Maybe initialize Mpi
         Dune::MPIHelper& helper = Dune::MPIHelper::instance(argc, argv);
-        if(Dune::MPIHelper::isFake)
+        /*if(Dune::MPIHelper::isFake)
             std::cout<< "This is a sequential program." << std::endl;
         else
         {
             if(helper.rank()==0)
                 std::cout << "parallel run on " << helper.size() << " process(es)" << std::endl;
-        }
+        }*/
 
         std::string configfile = argv[0]; configfile += ".conf";
 
@@ -399,21 +388,53 @@ int main(int argc, char** argv)
         {
             // make grid
             Dune::FieldVector<double,2> L;
-
             L[0] = param.get<double>("Domain.height");
             L[1] = param.get<double>("Domain.width");
-            Dune::FieldVector<int,2> N;
+
+            std::array<int,2> N;
             N[0] = param.get<int>("Domain.nx");
             N[1] = param.get<int>("Domain.ny");
-            Dune::FieldVector<bool,2> periodic(false);
-            int overlap = param.get<int>("overlap", 0);;
-            Dune::YaspGrid<2> grid(helper.getCommunicator(),L,N,periodic,overlap);
-            grid.globalRefine(param.get<int>("Domain.refine",0));
 
-            typedef Dune::YaspGrid<2>::LeafGridView GV;
-            const GV& gv=grid.leafGridView();
+            std::bitset<2> periodic(false);
+            int overlap = param.get<int>("overlap", 0);
+
+            typedef Dune::YaspGrid<2> HostGrid;
+            HostGrid hostgrid(helper.getCommunicator(),L,N,periodic,overlap);
+            hostgrid.globalRefine(param.get<int>("Domain.refine",0));
+
+            typedef Dune::MultiDomainGrid<HostGrid,Dune::mdgrid::ArrayBasedTraits<2,8,8> > MDGrid;
+            MDGrid mdgrid(hostgrid,true);
+            typedef typename MDGrid::LeafGridView MDGV;
+            typedef typename MDGV::template Codim<0>::Iterator Iterator;
+            typedef typename MDGrid::SubDomainIndexType SubDomainIndexType;
+
+            MDGV mdgv = mdgrid.leafGridView();
+            mdgrid.startSubDomainMarking();
+            for(Iterator it = mdgv.template begin<0>(); it != mdgv.template end<0>(); ++it)
+            {
+                SubDomainIndexType subdomain = 0;
+                mdgrid.removeFromAllSubDomains(*it);
+
+                // figure out, whether it is part of the
+                // region, and if so add it like so:
+
+                const auto& center = it->geometry().center();
+                if (isInside(center))
+                {
+                    mdgrid.addToSubDomain(subdomain,*it);
+                }
+            }
+
+            mdgrid.preUpdateSubDomains();
+            mdgrid.updateSubDomains();
+            mdgrid.postUpdateSubDomains();
+
+            typedef MDGrid::SubDomainGrid SDGrid;
+            const SDGrid& sdgrid = mdgrid.subDomain(0);
+            SDGrid::LeafGridView sdgv = sdgrid.leafGridView();
+
             // solve problem
-            run(gv,param);
+            run(sdgv,param);
         }
     }
     catch (Dune::Exception &e){

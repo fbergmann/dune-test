@@ -1,2 +1,3 @@
 add_subdirectory(turing_problem)
 add_subdirectory(turing_problem_ccfv)
+add_subdirectory(fish_ccfv)

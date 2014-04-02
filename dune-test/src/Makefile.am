@@ -1,5 +1,6 @@
 SUBDIRS = turing_problem \
-	turing_problem_ccfv	
+	turing_problem_ccfv	\
+	fish_ccfv
 
 # don't follow the full GNU-standard
 # we need automake 1.9
