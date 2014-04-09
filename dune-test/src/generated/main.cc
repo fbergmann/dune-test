@@ -50,6 +50,7 @@
 #include <dune/copasi/utilities/newton.hh>
 #include <dune/copasi/utilities/newtonutilities.hh>
 #include <dune/copasi/utilities/timemanager.hh>
+#include <dune/copasi/utilities/sbmlhelper.hh>
 
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/common/vtkexport.hh>
@@ -78,9 +79,9 @@
 #include <dune/pdelab/gridfunctionspace/subspace.hh>
 
 #include "componentparameters.hh"
-#include "ccfv_local_operator.hh"
-#include "initial_conditions.h"
-#include "reactionadapter.h"
+#include "local_operator.hh"
+#include "initial_conditions.hh"
+#include "reactionadapter.hh"
 
 
 
@@ -324,6 +325,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
 
     std::cout << std::endl;
+
 
 
 }
