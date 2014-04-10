@@ -198,9 +198,6 @@ public:
         typedef typename Space::Traits::FiniteElementType::
                 Traits::LocalBasisType::Traits::DomainFieldType DF;
 
-        typedef typename Space::Traits::FiniteElementType::
-                Traits::LocalBasisType::Traits::RangeFieldType RF;
-
         // dimensions
         const int dim = EG::Geometry::dimension;
 
