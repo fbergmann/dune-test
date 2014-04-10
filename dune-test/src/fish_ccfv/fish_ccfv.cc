@@ -242,7 +242,11 @@ void run (const GV& gv, Dune::ParameterTree & param)
             }
           else
             {
+<<<<<<< HEAD
               std::cout << ".";
+=======
+                std::cout << "." << std::flush;
+>>>>>>> 93c9769a3add521092119167e7ec1149a467581d
             }
         }
 
@@ -303,6 +307,14 @@ void run (const GV& gv, Dune::ParameterTree & param)
       if (graphics && timemanager.isTimeForOutput())
         pvdwriter.write(timemanager.getTime());
     }
+<<<<<<< HEAD
+=======
+
+
+    std::cout << std::endl;
+
+
+>>>>>>> 93c9769a3add521092119167e7ec1149a467581d
 }
 
 
