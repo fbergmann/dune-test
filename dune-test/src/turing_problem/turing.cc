@@ -267,7 +267,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
   // <<<8>>> graphics for initial guess
   std::stringstream basename;
-  basename << "turing_" << k << "Q" << k;
+  basename << param.get<std::string>("VTKname","")  << "_Q" << k << "-" << param.sub("Domain").get<int>("refine");
   typedef Dune::PVDWriter<GV> PVDWriter;
   PVDWriter pvdwriter(gv,basename.str());
   pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U0DGF>(u0dgf,"u0"));
