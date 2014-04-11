@@ -176,10 +176,10 @@ void run (const GV& gv, Dune::ParameterTree & param)
 #if HAVE_MPI
 #if HAVE_SUPERLU
   typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<IGO> LS;
-  LS ls(gfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
+  LS ls(tpgfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
 #else
-  typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
-  LS ls(gfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
+  typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<TPGFS,CC> LS;
+  LS ls(tpgfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
 #endif
 #else //!parallel
 #if HAVE_SUPERLU

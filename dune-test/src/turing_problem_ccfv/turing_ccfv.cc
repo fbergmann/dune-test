@@ -215,10 +215,10 @@ void run (const GV& gv, Dune::ParameterTree & param)
 #if HAVE_MPI
 #if HAVE_SUPERLU
   typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<IGO> LS;
-  LS ls(gfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
+  LS ls(tpgfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
 #else
   typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
-  LS ls(gfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
+  LS ls(tpgfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
 #endif
 #else //!parallel
 #if HAVE_SUPERLU
@@ -240,7 +240,6 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
   // <<<7>>> time-stepper
   Dune::PDELab::Alexander2Parameter<RF> method;
-  //Dune::PDELab::TimeSteppingParameterInterface<RF> method;
   Dune::PDELab::OneStepMethod<RF,IGO,PDESOLVER,V,V> osm(method,igo,pdesolver);
   Dune::PDELab::TimeSteppingMethods<RF> tsmethods;
   tsmethods.setTimestepMethod(osm,param.get<std::string>("timesolver"));
