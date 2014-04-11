@@ -13,5 +13,5 @@ AC_DEFUN([DUNE_TEST_CHECKS])
 # not by dune-test itself
 AC_DEFUN([DUNE_TEST_CHECK_MODULE],
 [
-  DUNE_CHECK_MODULES([dune-test],[test/test.hh])
+  DUNE_CHECK_MODULES([dune-test])
 ])
