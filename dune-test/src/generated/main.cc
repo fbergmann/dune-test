@@ -334,7 +334,7 @@ bool isInside(const Dune::FieldVector<double,2>& point)
 {
     const auto& x = point[0];
     const auto& y = point[1];
-
+    return true;
     bool inside=
             (pow(0.27 * (-42. + x), 2.) + pow(0.4 * (-50. + y), 2.) < 100. ||
             (y < (-10.+ x) &&  y > (110. + -x) && x < 90.));
