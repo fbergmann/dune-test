@@ -51,6 +51,7 @@
 #include <dune/copasi/utilities/newtonutilities.hh>
 #include <dune/copasi/utilities/timemanager.hh>
 #include <dune/copasi/utilities/sbmlhelper.hh>
+#include <dune/copasi/utilities/datahelper.hh>
 
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/common/vtkexport.hh>
@@ -82,8 +83,6 @@
 #include "local_operator.hh"
 #include "initial_conditions.hh"
 #include "reactionadapter.hh"
-
-
 
 
 /** \brief Control time step after reaction.
@@ -189,9 +188,9 @@ void run (const GV& gv, Dune::ParameterTree & param)
     V unew(tpgfs,0.0);
     // initial conditions
     typedef U0Initial<GV,RF> U0InitialType;
-    U0InitialType u0initial(gv);
+    U0InitialType u0initial(gv, "species_1.dmp");
     typedef U1Initial<GV,RF> U1InitialType;
-    U1InitialType u1initial(gv);
+    U1InitialType u1initial(gv, "species_2.dmp");
 
     typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
     UInitialType uinitial(u0initial,u1initial); //new
@@ -333,8 +332,6 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
 bool isInside(const Dune::FieldVector<double,2>& point)
 {
-//    /center[0], center[1]
-
     const auto& x = point[0];
     const auto& y = point[1];
 
@@ -342,8 +339,6 @@ bool isInside(const Dune::FieldVector<double,2>& point)
             (pow(0.27 * (-42. + x), 2.) + pow(0.4 * (-50. + y), 2.) < 100. ||
             (y < (-10.+ x) &&  y > (110. + -x) && x < 90.));
 
-    //if (inside)
-    //    std::cout << "found inside... x: " << x << " y: " << y  << std::endl;
     return inside;
 }
 
@@ -353,6 +348,7 @@ bool isInside(const Dune::FieldVector<double,2>& point)
 
 int main(int argc, char** argv)
 {
+
     try{
         //Maybe initialize Mpi
         Dune::MPIHelper& helper = Dune::MPIHelper::instance(argc, argv);
