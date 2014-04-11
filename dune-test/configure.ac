@@ -20,6 +20,8 @@ LIBS="$DUNE_LIBS"
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
+  src/generated/Makefile
+  src/fish_ccfv/Makefile
   src/turing_problem/Makefile
   src/turing_problem_ccfv/Makefile
   cmake/Makefile
