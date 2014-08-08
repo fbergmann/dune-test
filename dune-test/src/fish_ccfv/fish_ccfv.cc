@@ -309,18 +309,15 @@ void run (const GV& gv, Dune::ParameterTree & param)
 
 bool isInside(const Dune::FieldVector<double,2>& point)
 {
-  //    /center[0], center[1]
 
     const auto& x = point[0];
     const auto& y = point[1];
-return true;
+
     bool inside=
             (pow(0.27 * (-42. + x), 2.) + pow(0.4 * (-50. + y), 2.) < 100. ||
             (y < (-10.+ x) &&  y > (110. + -x) && x < 90.));
 
-  //if (inside)
-  //    std::cout << "found inside... x: " << x << " y: " << y  << std::endl;
-  return inside;
+    return inside;
 }
 
 //===============================================================
