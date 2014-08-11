@@ -85,6 +85,8 @@
 #include <dune/pdelab/instationary/onestep.hh>
 #include <dune/pdelab/gridfunctionspace/subspace.hh>
 
+#include <dune/pdelab/multidomain/multidomaingridfunctionspace.hh>
+
 #include "componentparameters.hh"
 #include "local_operator.hh"
 #include "initial_conditions.hh"
@@ -158,34 +160,26 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
       > MultiGFS;
 
     MultiGFS multigfs(grid,gfs0,gfs1);
-    
-    
-    
-    TPGFS tpgfs0(gfs0);
-    TPGFS tpgfs1(gfs1);
+        
     if (verbosity) std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
 
     // some informations
-    gfs0.update();
-    gfs1.update();
+    multigfs.update();
     if (verbosity) std::cout << "number of DOF =" << gfs0.globalSize() << std::endl;
 
 
     // <<<2b>>> make subspaces for visualization
-    typedef Dune::PDELab::GridFunctionSubSpace<TPGFS,Dune::TypeTree::TreePath<0> > U0SUB;
-    U0SUB u0sub0(tpgfs0);
-    U0SUB u0sub1(tpgfs1);
-    typedef Dune::PDELab::GridFunctionSubSpace<TPGFS,Dune::TypeTree::TreePath<1> > U1SUB;
-    U1SUB u1sub0(tpgfs0);
-    U1SUB u1sub1(tpgfs1);
+    typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<0> > U0SUB;
+    U0SUB u0sub(multigfs);
+    typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<1> > U1SUB;
+    U1SUB u1sub(multigfs);
 
 
     // make constraints map and initialize it from a function (boundary conditions)
     typedef typename TPGFS::template ConstraintsContainer<RF>::Type CC;
     CC cg;
     cg.clear();
-    Dune::PDELab::constraints(tpgfs0,cg,false);
-    Dune::PDELab::constraints(tpgfs1,cg,false);
+    Dune::PDELab::constraints(multigfs,cg,false);
 
     typedef ReactionAdapter<RF> RA;
     RA ra(param);
@@ -197,51 +191,41 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     typedef Dune::PDELab::istl::BCRSMatrixBackend<> MBE;
     MBE mbe(5); // Maximal number of nonzeroes per row can be cross-checked by patternStatistics().
     // grid operators
-    typedef Dune::PDELab::GridOperator<TPGFS,TPGFS,LOP,MBE,RF,RF,RF,CC,CC> CGO0;
-    CGO0 cgo00(tpgfs0,cg,tpgfs0,cg,lop,mbe);
-    CGO0 cgo01(tpgfs1,cg,tpgfs1,cg,lop,mbe);
-    typedef Dune::PDELab::GridOperator<TPGFS,TPGFS,TLOP,MBE,RF,RF,RF,CC,CC> CGO1;
-    CGO1 cgo10(tpgfs0,cg,tpgfs0,cg,tlop,mbe);
-    CGO1 cgo11(tpgfs1,cg,tpgfs1,cg,tlop,mbe);
+    typedef Dune::PDELab::GridOperator<MultiGFS,MultiGFS,LOP,MBE,RF,RF,RF,CC,CC> CGO0;
+    CGO0 cgo0(multigfs,cg,multigfs,cg,lop,mbe);
+    typedef Dune::PDELab::GridOperator<MultiGFS,MultiGFS,TLOP,MBE,RF,RF,RF,CC,CC> CGO1;
+    CGO1 cgo1(multigfs,cg,multigfs,cg,tlop,mbe);
     // one step grid operator for instationary problems
 
     typedef Dune::PDELab::OneStepGridOperator<CGO0,CGO1,true> IGO;
-    IGO igo0(cgo00,cgo10);
-    IGO igo1(cgo01,cgo11);
+    IGO igo(cgo0,cgo1);
 
 
     // <<<7>>> make vector for old time step and initialize
     typedef typename IGO::Traits::Domain V;
-    V uold0(tpgfs0,0.0);
-    V uold1(tpgfs1,0.0);
-    V unew0(tpgfs0,0.0);
-    V unew1(tpgfs1,0.0);
+    V uold(multigfs,0.0);
+    V unew(multigfs,0.0);
 
     // initial conditions
     typedef U0Initial<GV,RF> U0InitialType;
-    U0InitialType u0initial0(gv0,param);
-    U0InitialType u0initial1(gv1,param);
+    U0InitialType u0initial(gv0,param);
     typedef U1Initial<GV,RF> U1InitialType;
-    U1InitialType u1initial0(gv0,param);
-    U1InitialType u1initial1(gv1,param);
+    U1InitialType u1initial(gv0,param);
 
 
     typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
-    UInitialType uinitial0(u0initial0,u1initial0); //new
-    UInitialType uinitial1(u0initial1,u1initial1); //new
-    Dune::PDELab::interpolate(uinitial0,tpgfs0,uold0);
-    Dune::PDELab::interpolate(uinitial1,tpgfs1,uold1);
-    unew0 = uold0;
-    unew1 = uold1;
+    UInitialType uinitial(u0initial,u1initial); //new
+    Dune::PDELab::interpolate(uinitial,multigfs,uold);
+    unew = uold;
 
   // <<<5>>> Select a linear solver backend
 #if HAVE_MPI
 #if HAVE_SUPERLU
   typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<IGO> LS;
-  LS ls(tpgfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
+  LS ls(multigfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
 #else
   typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
-  LS ls(tpgfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
+  LS ls(multigfs,cc,5000,5,param.sub("Newton").get<int>("LinearVerbosity", 0));
 #endif
 #else //!parallel
 #if HAVE_SUPERLU
@@ -273,7 +257,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     sprintf(basename,"%s-%01d",param.get<std::string>("VTKname","").c_str(),param.sub("Domain").get<int>("refine"));
 
     typedef Dune::PVDWriter<GV> PVDWriter;
-    PVDWriter pvdwriter(gv,basename,Dune::VTK::conforming);
+    PVDWriter pvdwriter(gv0,basename,Dune::VTK::conforming);
     // discrete grid functions
     typedef Dune::PDELab::DiscreteGridFunction<U0SUB,V> U0DGF;
     U0DGF u0dgf(u0sub,uold);
@@ -294,7 +278,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     while (!timemanager.finalize())
     {
         dt = timemanager.getTimeStepSize();
-        if (gv.comm().rank() == 0)
+        if (gv0.comm().rank() == 0)
         {
             if (verbosity)
             {
@@ -309,7 +293,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             // do time step
             osm.apply(timemanager.getTime(),dt,uold,unew);
 
-            if (!controlReactionTimeStep(gv, unew))
+            if (!controlReactionTimeStep(gv0, unew))
             {
                 timemanager.notifyFailure();
                 unew = uold;
@@ -318,12 +302,12 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             }
             uold = unew;
 
-            if (gv.comm().rank() == 0 && verbosity)
+            if (gv0.comm().rank() == 0 && verbosity)
                 std::cout << "... done\n";
         }
         // newton linear search error
         catch (Dune::PDELab::NewtonLineSearchError) {
-            if (gv.comm().rank() == 0 && verbosity)
+            if (gv0.comm().rank() == 0 && verbosity)
                 std::cout << "Newton Linesearch Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
@@ -334,7 +318,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             continue;
         }
         catch (Dune::PDELab::NewtonNotConverged) {
-            if (gv.comm().rank() == 0 && verbosity)
+            if (gv0.comm().rank() == 0 && verbosity)
                 std::cout << "Newton Convergence Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
@@ -345,7 +329,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             continue;
         }
         catch (Dune::PDELab::NewtonLinearSolverError) {
-            if (gv.comm().rank() == 0 && verbosity )
+            if (gv0.comm().rank() == 0 && verbosity )
                 std::cout << "Newton Linear Solver Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
@@ -356,7 +340,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             continue;
         }
         catch (Dune::ISTLError) {
-            if (gv.comm().rank() == 0 && verbosity )
+            if (gv0.comm().rank() == 0 && verbosity )
                 std::cout << "ISTL Error" << std::endl;
             timemanager.notifyFailure();
             unew = uold;
@@ -367,7 +351,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             continue;
         }
 
-        if (gv.comm().rank() == 0 && verbosity)
+        if (gv0.comm().rank() == 0 && verbosity)
             std::cout << "... took : " << watch.elapsed() << " s" << std::endl;
 
         // notify success in this timestep
