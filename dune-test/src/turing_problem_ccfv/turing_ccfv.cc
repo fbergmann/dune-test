@@ -119,6 +119,8 @@ private:
 template<class GV>
 void run (const GV& gv, Dune::ParameterTree & param)
 {
+    const bool verbosity = param.sub("Verbosity").get<bool>("verbosity", false);
+    if (verbosity)
   Dune::gridinfo(gv.grid());
   typedef typename GV::Grid::ctype DF;
   typedef double RF;
@@ -153,7 +155,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
   CON con;
   GFS gfs(gv,fem,con);
   TPGFS tpgfs(gfs);
-  std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
+    if (verbosity) std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
 
   // some informations
   gfs.update();

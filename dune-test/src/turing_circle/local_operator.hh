@@ -163,7 +163,7 @@ class MulticomponentCCFVSpatialDiffusionOperator :
         public NumericalJacobianBoundary<MulticomponentCCFVSpatialDiffusionOperator<TP,RA> >,
         public NumericalJacobianApplySkeleton<MulticomponentCCFVSpatialDiffusionOperator<TP,RA> >,
         public NumericalJacobianApplyBoundary<MulticomponentCCFVSpatialDiffusionOperator<TP,RA> >,
-        
+
         public FullSkeletonPattern,
         public FullVolumePattern,
         public LocalOperatorDefaultFlags,
