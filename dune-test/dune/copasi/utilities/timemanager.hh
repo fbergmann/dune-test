@@ -236,7 +236,12 @@ public:
     // rate might be less meaningful.
     else{
       if(convergence_rate < increase_rate){
-        if(dt * 2.0 <= dt_max){
+        if(dt < 1e-7 && dt * 2000.0 <= dt_max){
+          dt *= 2000.0;
+          if (verbosity_level)
+            std::cout << "Increasing time step to " << dt << std::endl;
+        }
+        else if(dt * 2.0 <= dt_max){
           dt *= 2.0;
           if (verbosity_level)
             std::cout << "Increasing time step to " << dt << std::endl;
@@ -296,7 +301,7 @@ namespace Dune {
             std::shared_ptr<TimeSteppingParameterInterface<RF> > method = methods.find(method_name)->second;
             osm.setMethod(*method);
           }
-        else  DUNE_THROW(Exception,"method " << method_name << "can NOT be found");
+        else  DUNE_THROW(Exception,"method " << method_name << " can NOT be found");
       }
 
     private:

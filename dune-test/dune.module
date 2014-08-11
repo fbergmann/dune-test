@@ -7,4 +7,4 @@ Module: dune-copasi
 Version: 1.0
 Maintainer: fbergman@caltech.edu
 #depending on 
-Depends: dune-common dune-geometry dune-grid dune-localfunctions dune-istl dune-typetree dune-pdelab dune-multidomaingrid
+Depends: dune-common dune-geometry dune-grid dune-localfunctions dune-istl dune-typetree dune-pdelab dune-multidomain dune-multidomaingrid
