@@ -54,6 +54,12 @@ public:
       return BCType; // only neumann
     }
 
+    bool
+    isDirichlet(const typename Traits::IntersectionType& is, const typename Traits::IntersectionDomainType& x) const
+    {
+        return bc(is, x) == 1;
+    }
+
     //! Dirichlet boundary condition value
     typename Traits::RangeFieldType
     g (const typename Traits::IntersectionType& is, const typename Traits::IntersectionDomainType& x_) const

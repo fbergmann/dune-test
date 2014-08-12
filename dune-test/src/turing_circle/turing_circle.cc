@@ -201,14 +201,14 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     Condition c0(0);
     Condition c1(1);
 
-    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,LOP,Condition,GFS> LeftSubProblem_dt0;
-    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,TLOP,Condition,GFS> LeftSubProblem_dt1;
+    typedef Dune::PDELab::MultiDomain::SubProblem<MultiGFS,MultiGFS,LOP,Condition, 0> LeftSubProblem_dt0;
+    typedef Dune::PDELab::MultiDomain::SubProblem<MultiGFS,MultiGFS,TLOP,Condition, 0> LeftSubProblem_dt1;
 
     LeftSubProblem_dt0 left_sp_dt0(lop,c0);
     LeftSubProblem_dt1 left_sp_dt1(tlop,c0);
 
-    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,LOP,Condition,GFS> RightSubProblem_dt0;
-    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,TLOP,Condition,GFS> RightSubProblem_dt1;
+    typedef Dune::PDELab::MultiDomain::SubProblem<MultiGFS,MultiGFS,LOP,Condition,1> RightSubProblem_dt0;
+    typedef Dune::PDELab::MultiDomain::SubProblem<MultiGFS,MultiGFS,TLOP,Condition, 1> RightSubProblem_dt1;
 
     RightSubProblem_dt0 right_sp_dt0(lop,c1);
     RightSubProblem_dt1 right_sp_dt1(tlop,c1);
