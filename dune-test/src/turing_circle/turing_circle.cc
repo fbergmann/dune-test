@@ -86,12 +86,19 @@
 #include <dune/pdelab/gridfunctionspace/subspace.hh>
 
 #include <dune/pdelab/multidomain/multidomaingridfunctionspace.hh>
+#include <dune/pdelab/multidomain/coupling.hh>
+#include <dune/pdelab/multidomain/subproblemlocalfunctionspace.hh>
+#include <dune/pdelab/multidomain/gridoperator.hh>
+#include <dune/pdelab/multidomain/subproblem.hh>
+#include <dune/pdelab/constraints/conforming.hh>
+#include <dune/pdelab/multidomain/constraints.hh>
+#include <dune/pdelab/multidomain/interpolate.hh>
 
 #include "componentparameters.hh"
 #include "local_operator.hh"
 #include "initial_conditions.hh"
 #include "reactionadapter.hh"
-
+#include "proportionalflowcoupling.hh"
 
 /** \brief Control time step after reaction.
 
@@ -164,8 +171,8 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     if (verbosity) std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
 
     // some informations
-    multigfs.update();
-    if (verbosity) std::cout << "number of DOF =" << gfs0.globalSize() << std::endl;
+    //multigfs.update();
+    //if (verbosity) std::cout << "number of DOF =" << multigfs.globalSize() << std::endl;
 
 
     // <<<2b>>> make subspaces for visualization
@@ -176,7 +183,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
 
     // make constraints map and initialize it from a function (boundary conditions)
-    typedef typename TPGFS::template ConstraintsContainer<RF>::Type CC;
+    typedef typename MultiGFS::template ConstraintsContainer<RF>::Type CC;
     CC cg;
     cg.clear();
     Dune::PDELab::constraints(multigfs,cg,false);
@@ -188,6 +195,30 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     LOP lop(vct,ra); //local operator including reaction adapter
     typedef Dune::PDELab::MulticomponentCCFVTemporalOperator<VCT> TLOP;
     TLOP tlop(vct);
+
+    typedef Dune::PDELab::MultiDomain::SubDomainEqualityCondition<MDGrid> Condition;
+
+    Condition c0(0);
+    Condition c1(1);
+
+    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,LOP,Condition,GFS> LeftSubProblem_dt0;
+    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,TLOP,Condition,GFS> LeftSubProblem_dt1;
+
+    LeftSubProblem_dt0 left_sp_dt0(lop,c0);
+    LeftSubProblem_dt1 left_sp_dt1(tlop,c0);
+
+    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,LOP,Condition,GFS> RightSubProblem_dt0;
+    typedef Dune::PDELab::MultiDomain::TypeBasedSubProblem<MultiGFS,MultiGFS,TLOP,Condition,GFS> RightSubProblem_dt1;
+
+    RightSubProblem_dt0 right_sp_dt0(lop,c1);
+    RightSubProblem_dt1 right_sp_dt1(tlop,c1);
+
+    ContinuousValueContinuousFlowCoupling<RF> proportionalFlowCoupling(4,0.1);
+
+    typedef Dune::PDELab::MultiDomain::Coupling<LeftSubProblem_dt0,RightSubProblem_dt0,ContinuousValueContinuousFlowCoupling<RF> > Coupling;
+    Coupling coupling(left_sp_dt0,right_sp_dt0,proportionalFlowCoupling);
+
+
     typedef Dune::PDELab::istl::BCRSMatrixBackend<> MBE;
     MBE mbe(5); // Maximal number of nonzeroes per row can be cross-checked by patternStatistics().
     // grid operators
