@@ -157,8 +157,8 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     CON con;
     GFS gfs0(gv0,fem,con);
     GFS gfs1(gv1,fem,con);
-    
-     typedef Dune::PDELab::MultiDomain::MultiDomainGridFunctionSpace<
+
+    typedef Dune::PDELab::MultiDomain::MultiDomainGridFunctionSpace<
       MDGrid,
       VBE,
       Dune::PDELab::LexicographicOrderingTag,
@@ -180,7 +180,6 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     U0SUB u0sub(multigfs);
     typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<1> > U1SUB;
     U1SUB u1sub(multigfs);
-
 
     // make constraints map and initialize it from a function (boundary conditions)
     typedef typename MultiGFS::template ConstraintsContainer<RF>::Type CC;
@@ -228,10 +227,8 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     constraints.assemble(cg);
 
-
     typedef Dune::PDELab::istl::BCRSMatrixBackend<> MBE;
     MBE mbe(27); // Maximal number of nonzeroes per row can be cross-checked by patternStatistics().
-
 
     typedef Dune::PDELab::MultiDomain::GridOperator<
       MultiGFS,MultiGFS,
@@ -250,8 +247,6 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     typedef Dune::PDELab::OneStepGridOperator<GridOperator_dt0,GridOperator_dt1> GridOperator;
 
-
-
     // <<<7>>> make vector for old time step and initialize
     typedef typename GridOperator::Traits::Domain V;
     V uold(multigfs,0.0);
@@ -259,15 +254,20 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     // initial conditions
     typedef U0Initial<GV,RF> U0InitialType;
-    U0InitialType u0initial(gv0,param);
     typedef U1Initial<GV,RF> U1InitialType;
+    U0InitialType u0initial(gv0,param);
     U1InitialType u1initial(gv0,param);
 
 
     typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
     UInitialType uinitial(u0initial,u1initial); //new
-    //Dune::PDELab::interpolate(uinitial,multigfs,uold);
-    Dune::PDELab::MultiDomain::interpolateOnTrialSpace(multigfs,uold,uinitial,left_sp_dt0,uinitial,right_sp_dt0);
+    Dune::PDELab::interpolate(uinitial,multigfs,uold);
+
+    //Dune::PDELab::MultiDomain::interpolateOnTrialSpace
+    //        (multigfs,uold,u0initial,left_sp_dt0,u1initial,right_sp_dt0);
+
+    //Dune::PDELab::MultiDomain::interpolateOnTrialSpace
+    //        (multigfs,uold,uinitial,left_sp_dt0,uinitial,right_sp_dt0);
 
 
     unew = uold;
@@ -337,7 +337,6 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U1DGF>(u1dgf,"species_1"));
 
 
-
     // <<<9>>> time loop
 
     if (graphics)
@@ -347,7 +346,9 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     double dt = timemanager.getTimeStepSize();
     while (!timemanager.finalize())
     {
+
         dt = timemanager.getTimeStepSize();
+
         if (gv0.comm().rank() == 0)
         {
             if (verbosity)
@@ -358,6 +359,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
         }
 
         watch.reset();
+
         try
         {
             // do time step
@@ -439,11 +441,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
         }
     }
 
-
     std::cout << std::endl;
-
-
-
 }
 
 
@@ -532,10 +530,10 @@ int main(int argc, char** argv)
                 {
                     mdgrid.addToSubDomain(subdomain,*it);
                 }
-			 else
-			 {
+                else
+                {
                     mdgrid.addToSubDomain(1,*it);
-			 }
+                }
             }
 
             mdgrid.preUpdateSubDomains();

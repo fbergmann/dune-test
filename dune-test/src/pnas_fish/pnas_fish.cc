@@ -243,10 +243,17 @@ void run (const GV& gv, Dune::ParameterTree & param)
     newtonparameters.set(pdesolver);
 
     // <<<7>>> time-stepper
-    Dune::PDELab::RK4Parameter<RF> method;
-    Dune::PDELab::ExplicitOneStepMethod<RF,IGO,LS,V,V> osm(method,igo,ls);
-    Dune::PDELab::TimeSteppingMethods<RF> tsmethods;
-    tsmethods.setTimestepMethod(osm,param.get<std::string>("timesolver"));
+    typedef Dune::PDELab::CFLTimeController<RF,IGO> TC;
+    TC tc(0.999,igo);
+    Dune::PDELab::ExplicitEulerParameter<RF> method;
+    Dune::PDELab::ExplicitOneStepMethod<RF,IGO,LS,V,V, TC> osm(method,igo,ls, tc);
+    //Dune::PDELab::TimeSteppingMethods<RF> tsmethods;
+    //tsmethods.setTimestepMethod(osm,param.get<std::string>("timesolver"));
+
+    //Dune::PDELab::Alexander2Parameter<RF> method;
+    //Dune::PDELab::OneStepMethod<RF,IGO,PDESOLVER,V,V> osm(method,igo,pdesolver);
+    //Dune::PDELab::TimeSteppingMethods<RF> tsmethods;
+    //tsmethods.setTimestepMethod(osm,param.get<std::string>("timesolver"));
 
     osm.setVerbosityLevel(param.sub("Verbosity").get<int>("Instationary", 0));
 
