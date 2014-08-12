@@ -218,22 +218,42 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     typedef Dune::PDELab::MultiDomain::Coupling<LeftSubProblem_dt0,RightSubProblem_dt0,ContinuousValueContinuousFlowCoupling<RF> > Coupling;
     Coupling coupling(left_sp_dt0,right_sp_dt0,proportionalFlowCoupling);
 
+    // need to get bounds out of the DiffusionParameter
+    auto constraints = Dune::PDELab::MultiDomain::constraints<RF>
+    (
+       multigfs,
+       Dune::PDELab::MultiDomain::constrainSubProblem(left_sp_dt0,vct),
+       Dune::PDELab::MultiDomain::constrainSubProblem(right_sp_dt0,vct)
+    );
+
+    constraints.assemble(cg);
+
 
     typedef Dune::PDELab::istl::BCRSMatrixBackend<> MBE;
-    MBE mbe(5); // Maximal number of nonzeroes per row can be cross-checked by patternStatistics().
-    // grid operators
-    typedef Dune::PDELab::GridOperator<MultiGFS,MultiGFS,LOP,MBE,RF,RF,RF,CC,CC> CGO0;
-    CGO0 cgo0(multigfs,cg,multigfs,cg,lop,mbe);
-    typedef Dune::PDELab::GridOperator<MultiGFS,MultiGFS,TLOP,MBE,RF,RF,RF,CC,CC> CGO1;
-    CGO1 cgo1(multigfs,cg,multigfs,cg,tlop,mbe);
-    // one step grid operator for instationary problems
+    MBE mbe(27); // Maximal number of nonzeroes per row can be cross-checked by patternStatistics().
 
-    typedef Dune::PDELab::OneStepGridOperator<CGO0,CGO1,true> IGO;
-    IGO igo(cgo0,cgo1);
+
+    typedef Dune::PDELab::MultiDomain::GridOperator<
+      MultiGFS,MultiGFS,
+      MBE,RF,RF,RF,CC,CC,
+      LeftSubProblem_dt0,
+      RightSubProblem_dt0,
+      Coupling
+      > GridOperator_dt0;
+
+    typedef Dune::PDELab::MultiDomain::GridOperator<
+      MultiGFS,MultiGFS,
+      MBE,RF,RF,RF,CC,CC,
+      LeftSubProblem_dt1,
+      RightSubProblem_dt1
+      > GridOperator_dt1;
+
+    typedef Dune::PDELab::OneStepGridOperator<GridOperator_dt0,GridOperator_dt1> GridOperator;
+
 
 
     // <<<7>>> make vector for old time step and initialize
-    typedef typename IGO::Traits::Domain V;
+    typedef typename GridOperator::Traits::Domain V;
     V uold(multigfs,0.0);
     V unew(multigfs,0.0);
 
@@ -246,13 +266,32 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
     UInitialType uinitial(u0initial,u1initial); //new
-    Dune::PDELab::interpolate(uinitial,multigfs,uold);
+    //Dune::PDELab::interpolate(uinitial,multigfs,uold);
+    Dune::PDELab::MultiDomain::interpolateOnTrialSpace(multigfs,uold,uinitial,left_sp_dt0,uinitial,right_sp_dt0);
+
+
     unew = uold;
+
+    GridOperator_dt0 go_dt_0(multigfs,multigfs,
+                             cg,cg,
+                             mbe,
+                             left_sp_dt0,
+                             right_sp_dt0,
+                             coupling);
+
+    GridOperator_dt1 go_dt_1(multigfs,multigfs,
+                             cg,cg,
+                             mbe,
+                             left_sp_dt1,
+                             right_sp_dt1);
+
+    GridOperator igo(go_dt_0,go_dt_1);
+
 
   // <<<5>>> Select a linear solver backend
 #if HAVE_MPI
 #if HAVE_SUPERLU
-  typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<IGO> LS;
+  typedef Dune::PDELab::ISTLBackend_BCGS_AMG_SSOR<GridOperator> LS;
   LS ls(multigfs,param.sub("Newton").get<int>("LSMaxIterations", 100),param.sub("Newton").get<int>("LinearVerbosity", 0));
 #else
   typedef Dune::PDELab::ISTLBackend_OVLP_BCGS_SSORk<GFS,CC> LS;
@@ -269,7 +308,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 #endif
 
     // <<<6>>> Solver for non-linear problem per stage
-    typedef Dune::PDELab::Newton<IGO,LS,V> PDESOLVER;
+    typedef Dune::PDELab::Newton<GridOperator,LS,V> PDESOLVER;
     PDESOLVER pdesolver(igo,ls);
     pdesolver.setLineSearchStrategy(PDESOLVER::hackbuschReuskenAcceptBest); //strategy for linesearch
     typedef Dune::PDELab::NewtonParameters NewtonParameters;
@@ -278,7 +317,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     // <<<7>>> time-stepper
     Dune::PDELab::Alexander2Parameter<RF> method;
-    Dune::PDELab::OneStepMethod<RF,IGO,PDESOLVER,V,V> osm(method,igo,pdesolver);
+    Dune::PDELab::OneStepMethod<RF,GridOperator,PDESOLVER,V,V> osm(method,igo,pdesolver);
     Dune::PDELab::TimeSteppingMethods<RF> tsmethods;
     tsmethods.setTimestepMethod(osm,param.get<std::string>("timesolver"));
 
