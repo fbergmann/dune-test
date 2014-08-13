@@ -22,6 +22,7 @@ AC_CONFIG_FILES([
   src/Makefile
   src/generated/Makefile
   src/fish_ccfv/Makefile
+  src/pnas_fish/Makefile
   src/turing_problem/Makefile
   src/turing_problem_ccfv/Makefile
   cmake/Makefile

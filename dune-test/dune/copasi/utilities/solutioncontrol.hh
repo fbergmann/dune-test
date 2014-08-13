@@ -11,7 +11,7 @@
     \tparam V           Vector backend (containing DOF)
 */
 template<class GV, class V>
-bool controlReactionTimeStep (GV& gv, V& v)
+bool controlReactionTimeStepParallel (GV& gv, V& v)
 {
   int passed = 1;
   for (auto it=v.begin();it!=v.end();++it)
