@@ -11,6 +11,7 @@
 #endif
 
 #include <math.h>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <map>
@@ -61,7 +62,7 @@
 
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/common/vtkexport.hh>
-#include <dune/pdelab/instationary/pvdwriter.hh>
+//#include <dune/pdelab/instationary/pvdwriter.hh>
 
 #include <dune/pdelab/backend/istl/tags.hh>
 #include <dune/pdelab/backend/istl/descriptors.hh>
@@ -93,6 +94,7 @@
 #include <dune/pdelab/constraints/conforming.hh>
 #include <dune/pdelab/multidomain/constraints.hh>
 #include <dune/pdelab/multidomain/interpolate.hh>
+#include <dune/pdelab/multidomain/vtk.hh>
 
 #include "componentparameters.hh"
 #include "local_operator.hh"
@@ -134,12 +136,12 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     ConvergenceAdaptiveTimeStepper<RF> timemanager(param);
 
     // for each component parameters different classes
-    typedef DiffusionParameter<GV,RF> DP;
+    typedef DiffusionParameter<typename MDGrid::LeafGridView,RF> DP;
     DP dp1(param, "species_2");
     DP dp2(param, "species_1");
 
 
-    typedef Dune::PDELab::MulticomponentDiffusion<GV,RF,DP,2> VCT;
+    typedef Dune::PDELab::MulticomponentDiffusion<typename MDGrid::LeafGridView,RF,DP,2> VCT;
     VCT vct(dp1,dp2);
 
     // <<<2>>> Make grid function space
@@ -149,25 +151,31 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     typedef Dune::PDELab::ISTLVectorBackend<> VBE0;
     typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE0> GFS;
 
-    typedef Dune::PDELab::ISTLVectorBackend
-            <Dune::PDELab::ISTLParameters::static_blocking,VCT::COMPONENTS> VBE;
+    typedef Dune::PDELab::ISTLVectorBackend<> VBE;
+    //            <Dune::PDELab::ISTLParameters::static_blocking,VCT::COMPONENTS> VBE;
     typedef Dune::PDELab::PowerGridFunctionSpace<GFS,VCT::COMPONENTS,VBE,
             Dune::PDELab::EntityBlockedOrderingTag> TPGFS;
     watch.reset();
     CON con;
     GFS gfs0(gv0,fem,con);
+    TPGFS tpgfs0(gfs0);
+    tpgfs0.child(0).name("species0_0");
+    tpgfs0.child(1).name("species0_1");
     GFS gfs1(gv1,fem,con);
+    TPGFS tpgfs1(gfs1);
+    tpgfs1.child(0).name("species1_0");
+    tpgfs1.child(1).name("species1_1");
 
     typedef Dune::PDELab::MultiDomain::MultiDomainGridFunctionSpace<
       MDGrid,
       VBE,
       Dune::PDELab::LexicographicOrderingTag,
-      GFS,
-      GFS
+      TPGFS,
+      TPGFS
       > MultiGFS;
 
-    MultiGFS multigfs(grid,gfs0,gfs1);
-        
+    MultiGFS multigfs(grid,tpgfs0,tpgfs1);
+
     if (verbosity) std::cout << "=== function space setup " <<  watch.elapsed() << " s" << std::endl;
 
     // some informations
@@ -176,16 +184,10 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
 
     // <<<2b>>> make subspaces for visualization
-    typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<0> > U0SUB;
-    U0SUB u0sub(multigfs);
-    typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<1> > U1SUB;
-    U1SUB u1sub(multigfs);
-
-    // make constraints map and initialize it from a function (boundary conditions)
-    typedef typename MultiGFS::template ConstraintsContainer<RF>::Type CC;
-    CC cg;
-    cg.clear();
-    Dune::PDELab::constraints(multigfs,cg,false);
+    //typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<0> > U0SUB;
+    //U0SUB u0sub(multigfs);
+    //typedef Dune::PDELab::GridFunctionSubSpace<MultiGFS,Dune::TypeTree::TreePath<1> > U1SUB;
+    //U1SUB u1sub(multigfs);
 
     typedef ReactionAdapter<RF> RA;
     RA ra(param);
@@ -216,6 +218,9 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
     typedef Dune::PDELab::MultiDomain::Coupling<LeftSubProblem_dt0,RightSubProblem_dt0,ContinuousValueContinuousFlowCoupling<RF> > Coupling;
     Coupling coupling(left_sp_dt0,right_sp_dt0,proportionalFlowCoupling);
+
+    typedef typename MultiGFS::template ConstraintsContainer<RF>::Type CC;
+    CC cg;
 
     // need to get bounds out of the DiffusionParameter
     auto constraints = Dune::PDELab::MultiDomain::constraints<RF>
@@ -253,18 +258,19 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     V unew(multigfs,0.0);
 
     // initial conditions
-    typedef U0Initial<GV,RF> U0InitialType;
-    typedef U1Initial<GV,RF> U1InitialType;
-    U0InitialType u0initial(gv0,param);
-    U1InitialType u1initial(gv0,param);
+    typedef U0Initial<typename MDGrid::LeafGridView,RF> U0InitialType;
+    typedef U1Initial<typename MDGrid::LeafGridView,RF> U1InitialType;
+    U0InitialType u0initial(grid.leafGridView(),param);
+    U1InitialType u1initial(grid.leafGridView(),param);
 
 
-    typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
-    UInitialType uinitial(u0initial,u1initial); //new
-    Dune::PDELab::interpolate(uinitial,multigfs,uold);
+    //typedef Dune::PDELab::CompositeGridFunction<U0InitialType,U1InitialType> UInitialType; //new
+    typedef Dune::PDELab::PowerGridFunction<U0InitialType,2> UInitialType;
+    UInitialType uinitial(u0initial); //new
+    //Dune::PDELab::interpolate(uinitial,multigfs,uold);
 
-    //Dune::PDELab::MultiDomain::interpolateOnTrialSpace
-    //        (multigfs,uold,u0initial,left_sp_dt0,u1initial,right_sp_dt0);
+    Dune::PDELab::MultiDomain::interpolateOnTrialSpace
+            (multigfs,uold,uinitial,left_sp_dt0,uinitial,right_sp_dt0);
 
     //Dune::PDELab::MultiDomain::interpolateOnTrialSpace
     //        (multigfs,uold,uinitial,left_sp_dt0,uinitial,right_sp_dt0);
@@ -326,21 +332,52 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     char basename[255];
     sprintf(basename,"%s-%01d",param.get<std::string>("VTKname","").c_str(),param.sub("Domain").get<int>("refine"));
 
-    typedef Dune::PVDWriter<GV> PVDWriter;
-    PVDWriter pvdwriter(gv0,basename,Dune::VTK::conforming);
+    Dune::PDELab::FilenameHelper fn_domain0("vtk/" + param.get<std::string>("VTKname","") + "_domain0");
+    Dune::PDELab::FilenameHelper fn_domain1("vtk/" + param.get<std::string>("VTKname","") + "_domain1");
+
+    //typedef Dune::PVDWriter<GV> PVDWriter;
+    //PVDWriter pvdwriter(gv0,basename,Dune::VTK::conforming);
     // discrete grid functions
+#if 0
     typedef Dune::PDELab::DiscreteGridFunction<U0SUB,V> U0DGF;
     U0DGF u0dgf(u0sub,uold);
     pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U0DGF>(u0dgf,"species_2"));
     typedef Dune::PDELab::DiscreteGridFunction<U1SUB,V> U1DGF;
     U1DGF u1dgf(u1sub,uold);
     pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U1DGF>(u1dgf,"species_1"));
+#endif
+
+    {
+      Dune::VTKWriter<GV> vtkwriter(gv0,Dune::VTK::conforming);
+      Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
+                                                        vtkwriter,
+                                                        multigfs,
+                                                        unew,
+                                                        Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv0.grid().domain())
+                                                        );
+      vtkwriter.write(fn_domain0.getName(),Dune::VTK::ascii);
+
+      fn_domain0.increment();
+
+    }
+
+    {
+      Dune::VTKWriter<GV> vtkwriter(gv1,Dune::VTK::conforming);
+      Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
+                                                        vtkwriter,
+                                                        multigfs,
+                                                        unew,
+                                                        Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv1.grid().domain())
+                                                        );
+      vtkwriter.write(fn_domain1.getName(),Dune::VTK::ascii);
+      fn_domain1.increment();
+    }
 
 
     // <<<9>>> time loop
 
-    if (graphics)
-        pvdwriter.write(0);
+    //if (graphics)
+    //    pvdwriter.write(0);
 
 
     double dt = timemanager.getTimeStepSize();
@@ -355,7 +392,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             {
                 std::cout << "======= solve reaction problem ======= from " << timemanager.getTime() << "\n";
                 std::cout << "time " << timemanager.getTime() << " dt " << timemanager.getTimeStepSize() << std::endl;
-            }           
+            }
         }
 
         watch.reset();
@@ -431,7 +468,29 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
         if (graphics && timemanager.isTimeForOutput())
         {
-          pvdwriter.write(timemanager.getTime());
+          {
+            Dune::VTKWriter<GV> vtkwriter(gv0,Dune::VTK::conforming);
+            Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
+                                                              vtkwriter,
+                                                              multigfs,
+                                                              unew,
+                                                              Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv0.grid().domain())
+                                                              );
+            vtkwriter.write(fn_domain0.getName(),Dune::VTK::ascii);
+            fn_domain0.increment();
+          }
+
+          {
+            Dune::VTKWriter<GV> vtkwriter(gv1,Dune::VTK::conforming);
+            Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
+                                                              vtkwriter,
+                                                              multigfs,
+                                                              unew,
+                                                              Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv1.grid().domain())
+                                                              );
+            vtkwriter.write(fn_domain1.getName(),Dune::VTK::ascii);
+            fn_domain1.increment();
+          }
           if (!verbosity)
             std::cout << "o" << std::flush;
         }
@@ -559,4 +618,3 @@ int main(int argc, char** argv)
     //  return 1;
     //}
 }
-

@@ -51,6 +51,8 @@ public:
     int
     bc (const typename Traits::IntersectionType& is, const typename Traits::IntersectionDomainType& x) const
     {
+      if (!is.boundary())
+        return 0;
       return BCType; // only neumann
     }
 
