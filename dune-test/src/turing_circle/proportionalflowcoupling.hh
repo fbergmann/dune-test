@@ -118,6 +118,7 @@ public:
     const LFSU2& lfsu2, const X& x2, const LFSV2& lfsv2,
     R& r1, R& r2) const
   {
+#if 0
     // domain and range field type
     typedef typename LFSU1::Traits::FiniteElementType::
       Traits::LocalBasisType::Traits::DomainFieldType DF;
@@ -230,6 +231,7 @@ public:
             r2.accumulate(lfsv2,i,factor * value);
           }
       }
+#endif
   }
 
 private:
