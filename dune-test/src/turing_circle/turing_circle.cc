@@ -402,7 +402,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
             // do time step
             osm.apply(timemanager.getTime(),dt,uold,unew);
 
-            if (!controlReactionTimeStep(gv0, unew))
+            if (!controlReactionTimeStepParallel(gv0, unew))
             {
                 timemanager.notifyFailure();
                 unew = uold;

@@ -252,7 +252,7 @@ void run (const GV& gv, Dune::ParameterTree & param)
           // do time step
           osm.apply(timemanager.getTime(),dt,uold,unew);
 
-          if (!controlReactionTimeStep(gv,unew))
+          if (!controlReactionTimeStepParallel(gv,unew))
             {
               timemanager.notifyFailure();
               unew = uold;
