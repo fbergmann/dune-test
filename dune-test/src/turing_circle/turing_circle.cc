@@ -59,10 +59,11 @@
 #include <dune/copasi/utilities/timemanager.hh>
 #include <dune/copasi/utilities/sbmlhelper.hh>
 #include <dune/copasi/utilities/solutioncontrol.hh>
+#include <dune/copasi/utilities/mdpvdwriter.hh>
 
 #include <dune/pdelab/common/function.hh>
 #include <dune/pdelab/common/vtkexport.hh>
-//#include <dune/pdelab/instationary/pvdwriter.hh>
+
 
 #include <dune/pdelab/backend/istl/tags.hh>
 #include <dune/pdelab/backend/istl/descriptors.hh>
@@ -332,52 +333,15 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
     char basename[255];
     sprintf(basename,"%s-%01d",param.get<std::string>("VTKname","").c_str(),param.sub("Domain").get<int>("refine"));
 
-    Dune::PDELab::FilenameHelper fn_domain0("vtk/" + param.get<std::string>("VTKname","") + "_domain0");
-    Dune::PDELab::FilenameHelper fn_domain1("vtk/" + param.get<std::string>("VTKname","") + "_domain1");
-
-    //typedef Dune::PVDWriter<GV> PVDWriter;
-    //PVDWriter pvdwriter(gv0,basename,Dune::VTK::conforming);
-    // discrete grid functions
-#if 0
-    typedef Dune::PDELab::DiscreteGridFunction<U0SUB,V> U0DGF;
-    U0DGF u0dgf(u0sub,uold);
-    pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U0DGF>(u0dgf,"species_2"));
-    typedef Dune::PDELab::DiscreteGridFunction<U1SUB,V> U1DGF;
-    U1DGF u1dgf(u1sub,uold);
-    pvdwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<U1DGF>(u1dgf,"species_1"));
-#endif
-
-    {
-      Dune::VTKWriter<GV> vtkwriter(gv0,Dune::VTK::conforming);
-      Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
-                                                        vtkwriter,
-                                                        multigfs,
-                                                        unew,
-                                                        Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv0.grid().domain())
-                                                        );
-      vtkwriter.write(fn_domain0.getName(),Dune::VTK::ascii);
-
-      fn_domain0.increment();
-
-    }
-
-    {
-      Dune::VTKWriter<GV> vtkwriter(gv1,Dune::VTK::conforming);
-      Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
-                                                        vtkwriter,
-                                                        multigfs,
-                                                        unew,
-                                                        Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv1.grid().domain())
-                                                        );
-      vtkwriter.write(fn_domain1.getName(),Dune::VTK::ascii);
-      fn_domain1.increment();
-    }
-
+    typedef Dune::MdPVDWriter<MDGrid, MultiGFS, 2> PVDWriter;
+    PVDWriter pvdwriter(grid, multigfs, basename, Dune::VTK::conforming);
 
     // <<<9>>> time loop
 
-    //if (graphics)
-    //    pvdwriter.write(0);
+    if (graphics)
+    {
+        pvdwriter.write(0, uold);
+    }
 
 
     double dt = timemanager.getTimeStepSize();
@@ -468,29 +432,7 @@ void run (MDGrid& grid, const GV& gv0, const GV& gv1, Dune::ParameterTree & para
 
         if (graphics && timemanager.isTimeForOutput())
         {
-          {
-            Dune::VTKWriter<GV> vtkwriter(gv0,Dune::VTK::conforming);
-            Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
-                                                              vtkwriter,
-                                                              multigfs,
-                                                              unew,
-                                                              Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv0.grid().domain())
-                                                              );
-            vtkwriter.write(fn_domain0.getName(),Dune::VTK::ascii);
-            fn_domain0.increment();
-          }
-
-          {
-            Dune::VTKWriter<GV> vtkwriter(gv1,Dune::VTK::conforming);
-            Dune::PDELab::MultiDomain::addSolutionToVTKWriter(
-                                                              vtkwriter,
-                                                              multigfs,
-                                                              unew,
-                                                              Dune::PDELab::MultiDomain::subdomain_predicate<typename MDGrid::SubDomainIndex>(gv1.grid().domain())
-                                                              );
-            vtkwriter.write(fn_domain1.getName(),Dune::VTK::ascii);
-            fn_domain1.increment();
-          }
+          pvdwriter.write(timemanager.getTime(), uold);
           if (!verbosity)
             std::cout << "o" << std::flush;
         }
