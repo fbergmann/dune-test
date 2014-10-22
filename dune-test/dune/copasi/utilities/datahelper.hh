@@ -24,6 +24,17 @@ public:
   {
   }
 
+  static DataHelper* forFile(const std::string& fileName)
+  {
+    DataHelper* result = new DataHelper(fileName);
+    if (!result->isValid())
+    {
+      delete result;
+      result = NULL;
+    }
+    return result;
+  }
+  
   DataHelper(const std::string& fileName)
     : mData(0)
     , maxX(0)
