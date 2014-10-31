@@ -1,9 +1,16 @@
 utilitiesdir = $(includedir)/dune/copasi/utilities
-utilities_HEADERS =				\
-	newtonutilities.hh			\
-	newton.hh				\
-	timemanager.hh                          \
-	solutiontimeoutput.hh
+
+utilities_HEADERS =         \
+     componentparameters.hh \
+     datahelper.hh          \
+     mdpvdwriter.hh         \
+     newton.hh              \
+     newtonutilities.hh     \
+     pvdwriter.hh           \
+     sbmlhelper.hh          \
+     solutioncontrol.hh     \
+     solutiontimeoutput.hh  \
+     timemanager.hh
 
 include $(top_srcdir)/am/global-rules
 

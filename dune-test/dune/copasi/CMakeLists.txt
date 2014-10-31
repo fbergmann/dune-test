@@ -1,3 +1,1 @@
-#install headers
-install(FILES test.hh DESTINATION include/dune/test)
-
+add_subdirectory(utilities)
