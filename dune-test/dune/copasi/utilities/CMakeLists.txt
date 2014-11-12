@@ -13,5 +13,5 @@ install(
      solutiontimeoutput.hh
      timemanager.hh    
 
-  DESTINATION include/dune/copasi)
+  DESTINATION include/dune/copasi/utilities)
 

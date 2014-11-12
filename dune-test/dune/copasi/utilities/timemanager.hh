@@ -52,8 +52,8 @@ protected:
   ConvergenceAdaptiveTimeStepper()
     : backup_dt(0), total_steps(0), notified(true), verbosity_level(0)
   {
-      if (verbosity_level)
-          std::cout << "ConvergenceAdaptiveTimeStepper" << std::endl;
+    if (verbosity_level)
+      std::cout << "ConvergenceAdaptiveTimeStepper" << std::endl;
   }
 
 public:
@@ -131,20 +131,20 @@ public:
 
     // Check whether final time is achieved.
     if(time >= final_time - dt_eps){
-      if (verbosity_level)
-        {
-          const Real sec_elapsed = total_time.elapsed();
-          const Real hours_elapsed = sec_elapsed / 3600.0;
-          std::cout << "Finished time integration at time " << time << std::endl;
-          std::cout << "Total computation time: " << hours_elapsed << " h ( or " << sec_elapsed << " s )" << std::endl;
-        }
-      return 0;
-    }
+        if (verbosity_level)
+          {
+            const Real sec_elapsed = total_time.elapsed();
+            const Real hours_elapsed = sec_elapsed / 3600.0;
+            std::cout << "Finished time integration at time " << time << std::endl;
+            std::cout << "Total computation time: " << hours_elapsed << " h ( or " << sec_elapsed << " s )" << std::endl;
+          }
+        return 0;
+      }
 
     // Plot if time for plotting is passed and set next plot time
     if(time > next_plot_time - dt_eps){
-      next_plot_time = time + dt_plot;
-    }
+        next_plot_time = time + dt_plot;
+      }
     if(dt_plot == 0.0)
       next_plot_time = time + dt;
 
@@ -152,25 +152,25 @@ public:
     if(std::abs(time + dt - next_plot_time) < dt_eps
        || time + dt > next_plot_time){
 
-      // Only set backup time if the change is significant
-      if(next_plot_time - time < 0.5 * dt)
-        {
-          backup_dt = dt;
-          if (verbosity_level)
-            std::cout << "set backup " << dt << std::endl;
-        }
-      dt = next_plot_time - time;
-      if (verbosity_level)
-        std::cout << "Adapt time step to reach next output time: dt = " << dt << std::endl;
-    }
+        // Only set backup time if the change is significant
+        if(next_plot_time - time < 0.5 * dt)
+          {
+            backup_dt = dt;
+            if (verbosity_level)
+              std::cout << "set backup " << dt << std::endl;
+          }
+        dt = next_plot_time - time;
+        if (verbosity_level)
+          std::cout << "Adapt time step to reach next output time: dt = " << dt << std::endl;
+      }
 
     // Adapt time step size with regard to the final time
     if(std::abs(time + dt - final_time) < dt_eps
        || time + dt > final_time){
-      dt = final_time - time;
-      if (verbosity_level)
-        std::cout << "Adapt time step to reach final time: dt = " << dt << std::endl;
-    }
+        dt = final_time - time;
+        if (verbosity_level)
+          std::cout << "Adapt time step to reach final time: dt = " << dt << std::endl;
+      }
 
     if (verbosity_level)
       std::cout << "normal return dt is " << dt << std::endl;
@@ -204,10 +204,10 @@ public:
     // Begin with time integration step
     dt *= 0.5;
     if (dt<dt_min) {
-      if (verbosity_level)
-        std::cerr << "Time step too small. Exiting..." << std::endl;
-      exit(1);
-    }
+        if (verbosity_level)
+          std::cerr << "Time step too small. Exiting..." << std::endl;
+        exit(1);
+      }
   }
 
   //! \brief Notify the stepper about a succeeded time step and
@@ -226,33 +226,33 @@ public:
     time += dt;
 
     if(backup_dt){
-      dt = backup_dt;
+        dt = backup_dt;
 
-      if (verbosity_level)
-        std::cout << "Output time reached. Reset dt = " << dt << std::endl;
-    }
+        if (verbosity_level)
+          std::cout << "Output time reached. Reset dt = " << dt << std::endl;
+      }
     // The convergence dependend time step adaption is not applied
     // if an output time was approached exactly, as the convergence
     // rate might be less meaningful.
     else{
-      if(convergence_rate < increase_rate){
-        if(dt < 1e-7 && dt * 2000.0 <= dt_max){
-          dt *= 2000.0;
-          if (verbosity_level)
-            std::cout << "Increasing time step to " << dt << std::endl;
-        }
-        else if(dt * 2.0 <= dt_max){
-          dt *= 2.0;
-          if (verbosity_level)
-            std::cout << "Increasing time step to " << dt << std::endl;
-        }
-        else if(dt < dt_max){
-          dt = dt_max;
-          if (verbosity_level)
-            std::cout << "Increasing time step to " << dt << std::endl;
-        }
+        if(convergence_rate < increase_rate){
+            if(dt < 1e-7 && dt * 2000.0 <= dt_max){
+                dt *= 2000.0;
+                if (verbosity_level)
+                  std::cout << "Increasing time step to " << dt << std::endl;
+              }
+            else if(dt * 2.0 <= dt_max){
+                dt *= 2.0;
+                if (verbosity_level)
+                  std::cout << "Increasing time step to " << dt << std::endl;
+              }
+            else if(dt < dt_max){
+                dt = dt_max;
+                if (verbosity_level)
+                  std::cout << "Increasing time step to " << dt << std::endl;
+              }
+          }
       }
-    }
     if (verbosity_level)
       std::cout << "Time step computed in " << step_time.elapsed() << " s" << std::endl;
 
