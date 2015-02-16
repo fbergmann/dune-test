@@ -38,9 +38,9 @@ public:
   {
   }
 
-  static DataHelper* forFile(const std::string& fileName)
+  static DataHelper* forFile(const std::string& fileName, InterpolationType type = Bilinear)
   {
-    DataHelper* result = new DataHelper(fileName);
+    DataHelper* result = new DataHelper(fileName, type);
     if (!result->isValid())
       {
         delete result;
@@ -49,7 +49,7 @@ public:
     return result;
   }
   
-  DataHelper(const std::string& fileName)
+  DataHelper(const std::string& fileName, InterpolationType type = Bilinear)
     : mData(0)
     , dimY(0)
     , dimX(0)
@@ -58,7 +58,7 @@ public:
     , minY(0)
     , maxY(0)
     , valid(false)
-    , mType(Bilinear)
+    , mType(type)
   {
     initializeFromFile(fileName);
   }
