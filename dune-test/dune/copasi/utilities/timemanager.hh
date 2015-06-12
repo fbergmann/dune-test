@@ -39,6 +39,7 @@ protected:
   Real dt_eps;
   Real dt_max;
   Real dt_plot;
+  Real start;
   Real next_plot_time;
   Real backup_dt;
   int increase_rate;
@@ -98,10 +99,11 @@ public:
       dt(configuration.get<Real>("Timeloop.dt")),
       time(0.0),
       dt_min(configuration.get<Real>("Timeloop.dt_min")),
+      start(configuration.get<Real>("Timeloop.start", 0.0)),
       dt_eps(configuration.get<Real>("Timeloop.dt_eps",1.e-6)),
       dt_max(configuration.get<Real>("Timeloop.dt_max")),
       dt_plot(configuration.get<Real>("Timeloop.dt_plot")),
-      next_plot_time(time),
+      next_plot_time(start),
       backup_dt(0),
       increase_rate(configuration.get<Real>("Timeloop.increase_rate")),
       total_steps(0),
@@ -146,7 +148,13 @@ public:
         next_plot_time = time + dt_plot;
       }
     if(dt_plot == 0.0)
-      next_plot_time = time + dt;
+        if (start > time + dt > start)
+            next_plot_time = start;
+        else
+            next_plot_time = time ;
+
+    if (verbosity_level)
+      std::cout << "next plot time: " << next_plot_time << std::endl;
 
     // Adapt time step size with regard to the next plot time
     if(std::abs(time + dt - next_plot_time) < dt_eps
