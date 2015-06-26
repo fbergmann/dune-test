@@ -332,4 +332,162 @@ public:
 };
 
 
+
+template<typename GV, typename RF>
+void getCoordinates(GV &gv, std::vector< std::pair<RF,RF> > &coordinates)
+{
+    coordinates.clear();
+    for(auto it = gv.template begin<0>(); it != gv.template end<0>(); ++it)
+    {
+        const auto& center = it->geometry().center();
+
+        coordinates.push_back(std::make_pair((RF)center[0], (RF)center[1]));
+    }
+}
+
+template<typename V, typename RF>
+void  setNthElement (V &v, size_t n, size_t numComponents, const std::vector< std::pair<RF,RF> > &coordinates, const DataHelper* data)
+{
+    if (data == NULL) return;
+
+    size_t numCoords = coordinates.size();
+    size_t currentPos = 0;
+
+    size_t pos= 0;
+    for (auto it=v.begin(); it!=v.end();)
+    {
+        // skip first n components
+        size_t skip = 0;
+        while (skip < n)
+        {
+            ++it;
+            ++skip;
+            ++pos;
+        }
+
+        RF x = coordinates[currentPos].first;
+        RF y = coordinates[currentPos].second;
+
+        // change value position
+        *it = (*data).get(x,y);
+
+        ++it;
+        ++skip;
+        ++pos;
+
+
+        // skip remaining components
+        while(skip < numComponents)
+        {
+            ++it;
+            ++skip;
+            ++pos;
+        }
+
+
+        // advance position
+        ++currentPos;
+
+        if (currentPos == numCoords)
+            currentPos = 0;
+    }
+}
+
+
+template<typename V>
+double calculateDifference (V &vnew, V &old)
+{
+  double result = 0;
+  for (auto it=vnew.begin(), it2 = old.begin(); it!=vnew.end();++it, ++it2)
+  {
+    result += pow((*it) - (*it2), 2) ;
+  }
+  return sqrt(result);
+}
+
+
+
+class EventData
+{
+public:
+    EventData(const Dune::ParameterTree& param)
+     : mData(DataHelper::forFile(param.get<std::string>("file")))
+     , mStartTime(param.get<double>("start", 0))
+     , mAppliedEvent(false)
+     , mVariableIndex(param.get<int>("target"))
+     , mUniformValue(param.get<double>("uniform", 0))
+    {
+
+    }
+
+    bool hasFired() const { return mAppliedEvent; }
+
+    void setAppliedEvent(bool appliedEvent) { mAppliedEvent = appliedEvent; }
+
+    int getVariableIndex() const { return mVariableIndex; }
+
+    bool hasData() const { return mData != NULL; }
+
+    const DataHelper* getData() const { return mData; }
+
+    double getUniformValue() const { return mUniformValue; }
+
+    bool shouldFire(double time) const { return !mAppliedEvent &&  time >= mStartTime;  }
+
+protected:
+    DataHelper* mData;
+    double mStartTime;
+    int mVariableIndex;
+    bool mAppliedEvent;
+    double mUniformValue;
+};
+
+#define EVENT_SUPPORT_INITIALIZE(gv)\
+  std::vector< std::pair<RF, RF> > coordinates;\
+  getCoordinates(gv, coordinates);\
+
+
+#define EVENT_SUPPORT_HANDLE_EVENTS(time, numVariables, events, uold, unew )\
+    {\
+      std::vector<EventData>::iterator eventIt = events.begin();\
+      while(eventIt != events.end())\
+      {\
+        if (eventIt->shouldFire(time))\
+        {\
+            setNthElement(unew, eventIt->getVariableIndex(), numVariables, coordinates, eventIt->getData());\
+            uold = unew;\
+            eventIt->setAppliedEvent(true);\
+            appliedEvent = true;\
+            std::cout << "applied event!" << std::endl;\
+        }\
+        ++eventIt;\
+      }\
+    }\
+
+#define EVENT_SUPPORT_READ_DATA(target, parser, filename, skipVariable)\
+  {\
+    try\
+    {\
+        Dune::ParameterTree eventData;\
+        parser.readINITree(filename, eventData);\
+        \
+        skipVariable = eventData.get<bool>("skipOutputUntilEvent", false);\
+        \
+        const auto& keys = eventData.getSubKeys();\
+        for (auto it= keys.begin(); it != keys.end(); ++it )\
+        {\
+            target.push_back(EventData(eventData.sub(*it)));\
+        }\
+    }\
+    catch(...)\
+    {\
+    }\
+  }\
+
+#define EVENT_SUPPORT_GLOBALS(mEvents, skipOutputUntilEvent, appliedEvent)\
+    std::vector<EventData> mEvents;\
+    bool skipOutputUntilEvent = false;\
+    bool appliedEvent = false;\
+
+
 #endif // DATAHELPER_HH
