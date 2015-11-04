@@ -487,7 +487,7 @@ protected:
 #define EVENT_SUPPORT_GLOBALS(mEvents, skipOutputUntilEvent, appliedEvent)\
     std::vector<EventData> mEvents;\
     bool skipOutputUntilEvent = false;\
-    bool appliedEvent = false;\
+    bool appliedEvent = false\
 
 
 #endif // DATAHELPER_HH
