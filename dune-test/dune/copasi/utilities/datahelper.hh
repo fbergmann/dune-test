@@ -393,6 +393,51 @@ void  setNthElement (V &v, size_t n, size_t numComponents, const std::vector< st
     }
 }
 
+template<typename V, typename RF>
+void  setNthElement (V &v, size_t n, size_t numComponents, const std::vector< std::pair<RF,RF> > &coordinates, RF value)
+{
+    size_t numCoords = coordinates.size();
+    size_t currentPos = 0;
+
+    size_t pos= 0;
+    for (auto it=v.begin(); it!=v.end();)
+    {
+        // skip first n components
+        size_t skip = 0;
+        while (skip < n)
+        {
+            ++it;
+            ++skip;
+            ++pos;
+        }
+
+        RF x = coordinates[currentPos].first;
+        RF y = coordinates[currentPos].second;
+
+        // change value position
+        *it = value;
+
+        ++it;
+        ++skip;
+        ++pos;
+
+
+        // skip remaining components
+        while(skip < numComponents)
+        {
+            ++it;
+            ++skip;
+            ++pos;
+        }
+
+
+        // advance position
+        ++currentPos;
+
+        if (currentPos == numCoords)
+            currentPos = 0;
+    }
+}
 
 template<typename V>
 double calculateDifference (V &vnew, V &old)
@@ -411,7 +456,7 @@ class EventData
 {
 public:
     EventData(const Dune::ParameterTree& param)
-     : mData(DataHelper::forFile(param.get<std::string>("file")))
+     : mData(DataHelper::forFile(param.get<std::string>("file", "")))
      , mStartTime(param.get<double>("start", 0))
      , mAppliedEvent(false)
      , mVariableIndex(param.get<int>("target"))
@@ -454,11 +499,17 @@ protected:
       {\
         if (eventIt->shouldFire(time))\
         {\
-            setNthElement(unew, eventIt->getVariableIndex(), numVariables, coordinates, eventIt->getData());\
+				    if (eventIt->hasData())\
+						{\
+              setNthElement(unew, eventIt->getVariableIndex(), numVariables, coordinates, eventIt->getData());\
+						}\
+						else\
+						{\
+							setNthElement(unew, eventIt->getVariableIndex(), numVariables, coordinates, eventIt->getUniformValue());\
+						}\
             uold = unew;\
             eventIt->setAppliedEvent(true);\
             appliedEvent = true;\
-            std::cout << "applied event!" << std::endl;\
         }\
         ++eventIt;\
       }\
@@ -481,6 +532,7 @@ protected:
     }\
     catch(...)\
     {\
+		  skipVariable = false;\
     }\
   }\
 
